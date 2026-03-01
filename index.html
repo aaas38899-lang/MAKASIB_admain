@@ -12,14 +12,48 @@
 
     <style>
         :root { --p-blue: #2563eb; --p-cyan: #00d2ff; --p-purple: #7c3aed; }
-        body { font-family: 'Tajawal', sans-serif; background: #000; color: white; margin: 0; overflow-x: hidden; user-select: none; }
+        
+        /* خلفية متدرجة متحركة */
+        body { 
+            font-family: 'Tajawal', sans-serif; 
+            margin: 0; 
+            overflow-x: hidden; 
+            user-select: none;
+            background: linear-gradient(-45deg, #000000, #0a0a2e, #1a0a2e, #000000);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: white;
+            min-height: 100vh;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* تأثير البرق */
+        .lightning {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: white;
+            opacity: 0;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        .flash-it { animation: lightningFlash 0.2s ease-out; }
+        @keyframes lightningFlash {
+            0% { opacity: 0; }
+            50% { opacity: 0.3; }
+            100% { opacity: 0; }
+        }
+
         .grad-text { background: linear-gradient(to right, var(--p-cyan), var(--p-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .glass { background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .input-grad { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 15px; padding: 15px; width: 100%; color: white; outline: none; transition: 0.3s; font-size: 12px; }
+        .glass { background: rgba(15, 15, 15, 0.7); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .input-grad { background: rgba(10, 10, 10, 0.8); border: 1px solid #1a1a1a; border-radius: 15px; padding: 15px; width: 100%; color: white; outline: none; transition: 0.3s; font-size: 12px; }
         .input-grad:focus { border-color: var(--p-cyan); box-shadow: 0 0 10px rgba(0, 210, 255, 0.2); }
         
-        /* الحلقة المتدرجة الدوارة */
-        .timer-ring { width: 150px; height: 150px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; background: #000; z-index: 10; }
+        .timer-ring { width: 150px; height: 150px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; background: rgba(0,0,0,0.5); z-index: 10; }
         .timer-glow { 
             position: absolute; inset: -4px; border-radius: 50%; 
             background: conic-gradient(from 0deg, var(--p-cyan), var(--p-purple), var(--p-blue), var(--p-cyan));
@@ -36,19 +70,33 @@
         .hidden { display: none !important; }
         .nav-btn.active { color: var(--p-cyan); transform: scale(1.1); }
         
-        #slider { width: 100%; height: 180px; border-radius: 25px; overflow: hidden; position: relative; border: 1px solid #222; }
-        .slide { position: absolute; inset: 0; opacity: 0; transition: 1.5s ease-in-out; background-size: cover; background-position: center; }
+        #slider { width: 100%; height: 180px; border-radius: 25px; overflow: hidden; position: relative; border: 1px solid #222; background: #000; }
+        .slide { position: absolute; inset: 0; opacity: 0; transition: 1.5s ease-in-out; background-size: cover; background-position: center; background-repeat: no-repeat; }
         .slide.active { opacity: 1; }
+
+        /* نافذة الحظر */
+        #banOverlay { position: fixed; inset: 0; background: #000; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
+
+    <div id="lightning" class="lightning"></div>
+
+    <div id="banOverlay" class="hidden">
+        <div class="animate__animated animate__zoomIn">
+            <span class="text-6xl mb-6 block">🚫</span>
+            <h1 class="text-2xl font-bold text-red-500 mb-2">تم حظر حسابك!</h1>
+            <p class="text-gray-400 text-sm mb-8">لقد تم تعليق وصولك للمنصة لمخالفة القوانين.</p>
+            <a href="https://t.me/Dana00a" class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-2xl font-bold transition duration-300">مراسلة الدعم الفني</a>
+        </div>
+    </div>
 
     <div id="securityCheck" class="fixed inset-0 bg-black z-[1000] flex items-center justify-center flex-col text-center p-6">
         <h1 class="text-2xl font-bold grad-text mb-4 animate__animated animate__pulse animate__infinite">Al.shamil Elite</h1>
         <p class="text-xs text-gray-500">جاري تأمين المحفظة ومزامنة بيانات الفريق...</p>
     </div>
 
-    <div id="authPage" class="hidden min-h-screen flex items-center justify-center p-6 bg-[#050505]">
+    <div id="authPage" class="hidden min-h-screen flex items-center justify-center p-6">
         <div class="glass p-8 rounded-[3rem] w-full max-w-md text-center shadow-2xl border-white/10">
             <h1 class="text-4xl font-bold italic grad-text mb-10">Al.shamil</h1>
             <div id="loginForm" class="space-y-4">
@@ -175,6 +223,17 @@
         let userSession = null;
         let serverTimeOffset = 0;
 
+        // تأثير البرق العشوائي
+        function startLightning() {
+            setInterval(() => {
+                if(Math.random() > 0.95) {
+                    const l = document.getElementById('lightning');
+                    l.classList.add('flash-it');
+                    setTimeout(() => l.classList.remove('flash-it'), 200);
+                }
+            }, 3000);
+        }
+
         function syncTime() {
             rdb.ref(".info/serverTimeOffset").on("value", (snap) => {
                 serverTimeOffset = snap.val() || 0;
@@ -183,13 +242,31 @@
 
         window.onload = () => {
             syncTime();
+            startLightning();
             setTimeout(() => {
                 document.getElementById('securityCheck').classList.add('hidden');
                 const s = localStorage.getItem('shamil_session');
-                if(s) { userSession = JSON.parse(s); startPlatform(); } 
+                if(s) { 
+                    userSession = JSON.parse(s); 
+                    checkBanStatus(userSession.username);
+                } 
                 else { document.getElementById('authPage').classList.remove('hidden'); }
             }, 2000);
         };
+
+        // فحص الحظر
+        function checkBanStatus(username) {
+            rdb.ref('users/' + username).on('value', snap => {
+                const d = snap.val();
+                if(d && d.isBanned === true) {
+                    document.getElementById('banOverlay').classList.remove('hidden');
+                    document.getElementById('mainPage').classList.add('hidden');
+                } else {
+                    document.getElementById('banOverlay').classList.add('hidden');
+                    startPlatform();
+                }
+            });
+        }
 
         function startPlatform() {
             document.getElementById('authPage').classList.add('hidden');
@@ -214,8 +291,9 @@
 
         function initSlider() {
             const container = document.getElementById('slider');
+            container.innerHTML = ""; // تأمين عدم التكرار
             const images = [
-                "https://images.unsplash.com/photo-1611974715853-2b8ef9a3d136?w=500","https://images.unsplash.com/photo-1640344583441-739881f94caf?w=500","https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=500","https://images.unsplash.com/photo-1621761191319-c6fb6200404a?w=500","https://images.unsplash.com/photo-1633158829585-23bb8f628e3c?w=500","https://images.unsplash.com/photo-1642104704074-907c0698cbd9?w=500","https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=500","https://images.unsplash.com/photo-1620321023374-d1a68fbc720d?w=500","https://images.unsplash.com/photo-1634704784915-aacf363b021f?w=500","https://images.unsplash.com/photo-1642390233410-449e7556011c?w=500","https://images.unsplash.com/photo-1621504450181-5d356f63d3ee?w=500","https://images.unsplash.com/photo-1639813331945-968a10188b14?w=500","https://images.unsplash.com/photo-1622633044146-8848d4c3020a?w=500","https://images.unsplash.com/photo-1644088379091-d574269d4474?w=500","https://images.unsplash.com/photo-1639322537228-f710d846310a?w=500"
+                "https://images.unsplash.com/photo-1611974715853-2b8ef9a3d136?w=800","https://images.unsplash.com/photo-1640344583441-739881f94caf?w=800","https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800","https://images.unsplash.com/photo-1621761191319-c6fb6200404a?w=800","https://images.unsplash.com/photo-1633158829585-23bb8f628e3c?w=800"
             ];
             images.forEach((src, i) => {
                 const div = document.createElement('div');
@@ -223,12 +301,14 @@
                 div.style.backgroundImage = `url('${src}')`;
                 container.appendChild(div);
             });
-            let cur = 0; setInterval(() => {
+            let cur = 0; 
+            setInterval(() => {
                 const slides = document.querySelectorAll('.slide');
+                if(slides.length === 0) return;
                 slides[cur].classList.remove('active');
                 cur = (cur + 1) % slides.length;
                 slides[cur].classList.add('active');
-            }, 3000);
+            }, 4000);
         }
 
         function register() {
@@ -243,7 +323,8 @@
             rdb.ref('users/' + u).set({
                 username: u, email: e, phone: p, password: pw, img: img, balance: 0.0, 
                 hasActivePlan: false, planLevel: 0, planProfit: 0, subscriptionsCount: 0, 
-                activePlans: [], myReferralCode: myRefCode, referredBy: ref || null, teamCount: 0, paidReferrals: 0
+                activePlans: [], myReferralCode: myRefCode, referredBy: ref || null, teamCount: 0, paidReferrals: 0,
+                isBanned: false
             }).then(() => {
                 if(ref) {
                     rdb.ref('users').once('value', snap => {
@@ -317,7 +398,6 @@
             }
         }
 
-        // --- تعديل الإيداع والسحب ---
         function openWalletModal(type) {
             document.getElementById('modal').classList.remove('hidden');
             const b = document.getElementById('modalBody');
@@ -336,15 +416,13 @@
                             <p class="mt-1 text-[7px] opacity-50">(اضغط للنسخ)</p>
                         </div>
                         <input type="text" value="${userSession.username}" readonly class="input-grad opacity-50">
-                        <input type="text" value="${userSession.phone}" readonly class="input-grad opacity-50">
-                        <input type="text" value="${userSession.email}" readonly class="input-grad opacity-50">
                         <input type="number" id="fAmt" placeholder="المبلغ الذي حولته $" class="input-grad">
                         <div class="text-right">
                             <p class="text-[8px] text-gray-500 mb-1">صورة التحويل (Screenshot):</p>
                             <input type="file" id="fImg" accept="image/*" class="text-[9px]" onchange="previewImg(this, 'dPre')">
                         </div>
                         <img id="dPre" class="w-20 h-20 rounded hidden mx-auto object-cover border border-white/10">
-                        <button onclick="subDep()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold text-xs mt-2">إرسال طلب الإيداع</button>
+                        <button onclick="subDep()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold text-sm mt-2">إرسال طلب الإيداع</button>
                     </div>`;
             } else {
                 b.innerHTML = `
@@ -355,9 +433,6 @@
                             <option value="asia">رصيد آسياسيل</option>
                         </select>
                         <input type="text" id="dAddr" placeholder="عنوان محفظة OKX فقط" class="input-grad">
-                        <input type="text" value="${userSession.username}" readonly class="input-grad opacity-50">
-                        <input type="text" value="${userSession.email}" readonly class="input-grad opacity-50">
-                        <input type="text" value="${userSession.phone}" readonly class="input-grad opacity-50">
                         <input type="number" id="dAmt" placeholder="المبلغ المطلوب سحبه" class="input-grad" oninput="document.getElementById('tx').innerText = '$'+(this.value*0.1).toFixed(1); document.getElementById('nt').innerText = '$'+(this.value*0.9).toFixed(1)">
                         <div class="p-3 bg-white/5 rounded-2xl text-[9px] space-y-1">
                             <div class="flex justify-between text-red-400"><span>استقطاع 10%</span> <span id="tx">$0</span></div>
@@ -415,13 +490,12 @@
                 });
             } else if(type === 'profile') {
                 b.innerHTML = `<div class="text-center space-y-4"><img src="${userSession.img}" class="w-20 h-20 mx-auto rounded-full object-cover border-2 border-blue-600"><h4 class="font-bold">${userSession.username}</h4><div class="space-y-2 text-[10px] text-right bg-white/5 p-4 rounded-2xl"><p>📧 ${userSession.email}</p><p>📞 ${userSession.phone}</p><p>🆔 رمز إحالتك: ${userSession.myReferralCode}</p></div><button onclick="logout()" class="w-full bg-red-600/20 text-red-500 py-3 rounded-xl font-bold text-xs">خروج</button></div>`;
-            } else if(type === 'notifs') {
-                b.innerHTML = `<h3 class="font-bold mb-4">الإشعارات</h3><div id="nList" class="space-y-2"></div>`;
-                rdb.ref('notifications/' + userSession.username).limitToLast(10).once('value', s => {
-                    const nl = document.getElementById('nList'); if(!s.exists()) nl.innerHTML = "<p class='text-[10px] opacity-50 text-center py-10'>لا توجد إشعارات</p>";
-                    s.forEach(c => { nl.innerHTML += `<div class="p-3 bg-white/5 rounded-xl border-l-4 border-blue-500 text-[10px]">${c.val().msg}</div>`; });
-                });
-            } else { b.innerHTML = `<h3 class="font-bold mb-4 text-center">الدعم الفني</h3><a href="https://t.me/AlShamil_Support" class="block w-full bg-blue-500 p-4 rounded-2xl text-center font-bold text-xs">تليجرام المباشر</a>`; }
+            } else if(type === 'support') {
+                b.innerHTML = `<h3 class="font-bold mb-4 text-center text-blue-400">الدعم الفني</h3>
+                <p class="text-[10px] text-gray-400 text-center mb-6">هل تواجه مشكلة؟ فريقنا متاح 24/7</p>
+                <a href="https://t.me/Dana00a" class="block w-full bg-blue-600 p-4 rounded-2xl text-center font-bold text-xs shadow-lg active:scale-95 transition">مراسلة المطور عبر تليجرام</a>
+                <p class="mt-4 text-[8px] text-center opacity-30">@Dana00a</p>`;
+            }
         }
 
         function loadHistory() {
@@ -430,7 +504,7 @@
                 snap.forEach(c => {
                     const t = c.val(); if(t.username === userSession.username) {
                         list.innerHTML += `<div class="p-3 bg-white/5 rounded-2xl flex justify-between items-center mb-2">
-                            <div><p class="text-[9px] font-bold">${t.type==='deposit'?'إيداع':'سحب'}</p><p class="text-[7px] text-gray-500">${new Date(t.time).toLocaleDateString()}</p></div>
+                            <div><p class="text-[9px] font-bold">${t.type==='deposit'?'إيداع':'سحب'}</p><p class="text-[7px] text-gray-400">${new Date(t.time).toLocaleDateString()}</p></div>
                             <div class="text-left font-bold"><p class="text-[9px]">$${t.amount}</p><p class="text-[7px] ${t.status==='pending'?'text-yellow-500':'text-green-500'}">${t.status}</p></div></div>`;
                     }
                 });

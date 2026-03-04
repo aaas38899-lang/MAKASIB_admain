@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Al.shamil Elite | Full System</title>
+    <title>Al.shamil Elite | Ultra Security</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -11,432 +11,259 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <style>
-        :root { --p-blue: #2563eb; --p-cyan: #00d2ff; --p-purple: #7c3aed; }
+        :root { --p-blue: #3b82f6; --p-purple: #8b5cf6; --p-dark: #0f172a; }
         body { 
-            font-family: 'Tajawal', sans-serif; 
-            margin: 0; overflow-x: hidden; user-select: none;
-            background: linear-gradient(-45deg, #000000, #0a0a2e, #1a0a2e, #000000);
-            background-size: 400% 400%; animation: gradientBG 15s ease infinite;
-            color: white; min-height: 100vh;
+            font-family: 'Tajawal', sans-serif; margin: 0; overflow-x: hidden; user-select: none;
+            background: radial-gradient(circle at top, #1e1b4b, #000000); color: white; min-height: 100vh;
         }
-        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        .grad-text { background: linear-gradient(to right, var(--p-cyan), var(--p-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .glass { background: rgba(15, 15, 15, 0.7); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .input-grad { background: rgba(10, 10, 10, 0.8); border: 1px solid #1a1a1a; border-radius: 15px; padding: 12px; width: 100%; color: white; outline: none; transition: 0.3s; font-size: 11px; }
-        .timer-ring { width: 140px; height: 140px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; background: rgba(0,0,0,0.5); }
-        .timer-glow { position: absolute; inset: -3px; border-radius: 50%; background: conic-gradient(from 0deg, var(--p-cyan), var(--p-purple), var(--p-blue), var(--p-cyan)); animation: rotateGlow 2.5s linear infinite; mask: radial-gradient(closest-side, transparent 92%, black 100%); -webkit-mask: radial-gradient(closest-side, transparent 92%, black 100%); }
+        .grad-text { background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .btn-grad { background: linear-gradient(90deg, var(--p-blue), var(--p-purple)); border: none; transition: 0.3s; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+        .btn-grad:active { transform: scale(0.95); }
+        .input-grad { background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 12px; width: 100%; color: white; outline: none; font-size: 11px; }
+        
+        /* نافذة الحظر الإجباري */
+        #banOverlay { position: fixed; inset: 0; background: #000; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+
+        .timer-ring { width: 150px; height: 150px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; background: rgba(0,0,0,0.7); }
+        .timer-glow { position: absolute; inset: -4px; border-radius: 50%; background: conic-gradient(from 0deg, var(--p-blue), var(--p-purple), var(--p-blue)); animation: rotateGlow 3s linear infinite; mask: radial-gradient(closest-side, transparent 94%, black 100%); -webkit-mask: radial-gradient(closest-side, transparent 94%, black 100%); }
         @keyframes rotateGlow { 100% { transform: rotate(360deg); } }
-        .ticker-wrap { background: linear-gradient(90deg, #1e3a8a, #581c87); padding: 8px 0; overflow: hidden; white-space: nowrap; border-radius: 15px; }
-        .ticker-move { display: inline-block; animation: ticker-reverse 25s linear infinite; font-size: 0.7rem; font-weight: bold; }
-        @keyframes ticker-reverse { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-        .hidden { display: none !important; }
-        .nav-btn.active { color: var(--p-cyan); transform: scale(1.1); }
-        #slider { width: 100%; height: 160px; border-radius: 20px; overflow: hidden; position: relative; border: 1px solid #222; }
+
+        #slider { width: 100%; height: 170px; border-radius: 25px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.1); }
         .slide { position: absolute; inset: 0; opacity: 0; transition: 1.5s; background-size: cover; background-position: center; }
         .slide.active { opacity: 1; }
-        .notif-badge { position: absolute; top: -5px; right: -5px; background: red; color: white; font-size: 8px; padding: 2px 5px; border-radius: 50%; }
+
+        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; height: 75px; z-index: 1000; border-radius: 25px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -10px 25px rgba(0,0,0,0.5); }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; transition: 0.3s; color: rgba(255,255,255,0.3); }
+        .nav-btn.active { color: #60a5fa; transform: translateY(-5px); }
+        
+        .notif-badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 8px; padding: 2px 6px; border-radius: 50%; font-weight: bold; }
+        .ticker-wrap { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); padding: 10px 0; overflow: hidden; white-space: nowrap; border-radius: 15px; }
+        .ticker-move { display: inline-block; animation: ticker-reverse 22s linear infinite; font-size: 0.75rem; color: #93c5fd; }
+        @keyframes ticker-reverse { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        .hidden { display: none !important; }
+
+        /* ستايل الفريق الاحترافي */
+        .team-card { background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%); border-radius: 20px; padding: 15px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-left: 8px; box-shadow: 0 0 8px currentColor; }
     </style>
 </head>
 <body>
 
-    <div id="securityCheck" class="fixed inset-0 bg-black z-[1000] flex items-center justify-center flex-col text-center p-6">
-        <h1 class="text-2xl font-bold grad-text mb-4 animate__animated animate__pulse animate__infinite">Al.shamil Elite</h1>
-        <p class="text-xs text-gray-500">جاري التحقق من الاتصال المشفر...</p>
+    <div id="banOverlay" class="hidden">
+        <div class="animate__animated animate__zoomIn">
+            <span class="text-6xl mb-6 block">🚫</span>
+            <h1 class="text-2xl font-bold text-red-500 mb-2">تم حظر حسابك!</h1>
+            <p class="text-gray-400 text-sm mb-8">لقد تم تعليق وصولك للمنصة لمخالفة القوانين.</p>
+            <a href="https://t.me/Dana00a" class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-2xl font-bold transition duration-300 shadow-lg">مراسلة الدعم الفني</a>
+        </div>
+    </div>
+
+    <div id="securityCheck" class="fixed inset-0 bg-black z-[2000] flex items-center justify-center flex-col text-center p-6">
+        <h1 class="text-3xl font-bold grad-text mb-6 animate__animated animate__pulse animate__infinite">Al.shamil Elite</h1>
+        <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <div id="authPage" class="hidden min-h-screen flex items-center justify-center p-6">
-        <div class="glass p-8 rounded-[3rem] w-full max-w-md text-center">
+        <div class="glass p-8 rounded-[3.5rem] w-full max-w-md text-center shadow-2xl">
             <h1 class="text-4xl font-bold italic grad-text mb-10">Al.shamil</h1>
             <div id="loginForm" class="space-y-4">
                 <input type="text" id="logId" placeholder="اسم المستخدم" class="input-grad">
                 <input type="password" id="logPass" placeholder="كلمة المرور" class="input-grad">
-                <button onclick="login()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold text-sm">دخول آمن</button>
-                <p class="text-[10px] text-gray-500 mt-6 cursor-pointer underline" onclick="toggleAuth(true)">إنشاء حساب جديد</p>
+                <button onclick="login()" class="w-full btn-grad py-4 rounded-2xl font-bold shadow-xl">دخول آمن</button>
+                <p class="text-[10px] text-gray-500 mt-6 cursor-pointer underline" onclick="toggleAuth(true)">مستخدم جديد؟ سجل الآن</p>
             </div>
             <div id="regForm" class="hidden space-y-3 text-right">
-                <div class="relative w-16 h-16 mx-auto mb-2">
-                    <img id="regPreview" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="w-full h-full rounded-full object-cover">
-                    <label class="absolute bottom-0 right-0 bg-blue-600 p-1 rounded-full cursor-pointer"><span class="text-[8px]">📷</span><input type="file" id="regFile" class="hidden" onchange="previewImg(this, 'regPreview')"></label>
-                </div>
                 <input type="text" id="regUser" placeholder="اسم المستخدم" class="input-grad">
                 <input type="email" id="regEmail" placeholder="البريد الإلكتروني" class="input-grad">
                 <input type="tel" id="regPhone" placeholder="رقم الهاتف" class="input-grad">
                 <input type="password" id="regPass" placeholder="كلمة المرور" class="input-grad">
                 <input type="text" id="regRef" placeholder="رمز الإحالة (اختياري)" class="input-grad">
-                <button onclick="register()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold text-sm">تأكيد الحساب</button>
-                <p class="text-[10px] text-gray-500 mt-4 text-center cursor-pointer" onclick="toggleAuth(false)">لديك حساب؟ سجل دخول</p>
+                <button onclick="register()" class="w-full btn-grad py-4 rounded-2xl font-bold">إنشاء الحساب</button>
+                <p class="text-[10px] text-center mt-4 cursor-pointer" onclick="toggleAuth(false)">لديك حساب؟ سجل دخول</p>
             </div>
         </div>
     </div>
 
-    <div id="mainPage" class="hidden min-h-screen pb-20">
+    <div id="mainPage" class="hidden min-h-screen">
         <header class="flex justify-between items-center p-4 glass sticky top-0 z-[100]">
             <div class="flex gap-4">
                 <span class="text-xl cursor-pointer" onclick="openModal('support')">🎧</span>
                 <div class="relative cursor-pointer" onclick="openModal('notifications')">
-                    <span class="text-xl">🔔</span>
-                    <span id="notifBadge" class="notif-badge hidden">0</span>
+                    <span class="text-xl">🔔</span><span id="notifBadge" class="notif-badge hidden">0</span>
                 </div>
             </div>
             <div class="flex items-center gap-3" onclick="openModal('profile')">
-                <img id="topImg" src="" class="w-8 h-8 rounded-full border border-white/20 object-cover">
-                <span class="text-xl">☰</span>
+                <img id="topImg" src="" class="w-8 h-8 rounded-full border border-blue-500/40 object-cover"><span class="text-lg">☰</span>
             </div>
         </header>
 
-        <main id="homeContent" class="p-5 space-y-6">
-            <div class="ticker-wrap">
-                <div class="ticker-move">🚀 أهلاً بك في الشامل إيليت | أرباحك تُجمع آلياً من جميع باقاتك كل 24 ساعة 🚀</div>
-            </div>
+        <main id="homeContent" class="p-5 space-y-6 pb-32">
+            <div class="ticker-wrap"><div class="ticker-move">💎 تم تفعيل نظام الأرباح المجمعة | كود الإحالة الخاص بك يمنحك مكافآت فورية من فريقك 💎</div></div>
 
-            <div class="glass p-6 rounded-[2.5rem] space-y-4 shadow-2xl border-white/5">
-                <div class="flex justify-between items-center">
+            <div class="glass p-6 rounded-[2.5rem] space-y-4 shadow-2xl relative overflow-hidden">
+                <div class="flex justify-between items-center relative z-10">
                     <div>
                         <h2 id="uNameDisp" class="text-sm font-bold grad-text">...</h2>
-                        <p id="uVipDisp" class="text-[8px] text-gray-500 italic mt-1">جاري التحميل...</p>
+                        <div class="flex items-center gap-2 mt-2 bg-blue-500/10 p-1 px-3 rounded-full border border-blue-500/20 w-fit cursor-pointer active:scale-95 transition" onclick="copyRef()">
+                            <span id="uRefDisp" class="text-[10px] text-blue-300 font-bold tracking-widest">------</span><span class="text-[7px] text-gray-500">نسخ</span>
+                        </div>
                     </div>
-                    <div class="text-left">
-                        <p class="text-[9px] text-gray-500">الرصيد الكلي</p>
-                        <h3 id="uBalDisp" class="text-2xl font-bold tabular-nums">$0.00</h3>
-                    </div>
+                    <div class="text-left"><p class="text-[9px] text-gray-400">الرصيد</p><h3 id="uBalDisp" class="text-2xl font-bold tabular-nums tracking-wide">$0.00</h3></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 text-center border-t border-white/5 pt-4">
-                    <div><p class="text-[8px] text-gray-500 uppercase">الربح المجمع</p><p id="uTotalProfitDisp" class="text-xs font-bold text-green-400">$0.00</p></div>
-                    <div onclick="openModal('subDetails')" class="cursor-pointer">
-                        <p class="text-[8px] text-gray-500 uppercase">الاشتراكات</p><p id="uCountDisp" class="text-xs font-bold text-blue-400">0</p>
-                    </div>
+                    <div><p class="text-[8px] text-gray-500">الربح اليومي المجمع</p><p id="uTotalProfitDisp" class="text-sm font-bold text-green-400">$0.00</p></div>
+                    <div onclick="openModal('subDetails')" class="cursor-pointer border-r border-white/5"><p class="text-[8px] text-gray-500">الاشتراكات</p><p id="uCountDisp" class="text-sm font-bold text-blue-400">0</p></div>
                 </div>
             </div>
 
-            <div class="flex flex-col items-center py-2">
+            <div class="flex flex-col items-center py-4">
                 <div class="timer-ring">
-                    <div class="timer-glow hidden" id="glowRing"></div>
-                    <div id="timerVal" class="text-xl font-bold tabular-nums">00:00:00</div>
+                    <div class="timer-glow hidden" id="glowRing"></div><div id="timerVal" class="text-2xl font-bold tabular-nums">00:00:00</div>
                 </div>
-                <p id="timerStatus" class="text-[8px] text-gray-500 mt-2">لا يوجد اشتراك نشط</p>
             </div>
 
             <div id="slider"></div>
-
-            <h3 class="text-[10px] font-bold border-r-4 border-blue-600 pr-2">الباقات المتاحة</h3>
             <div id="vipGrid" class="grid grid-cols-2 gap-4"></div>
         </main>
 
-        <main id="walletContent" class="hidden p-5 space-y-6">
-            <h2 class="text-center font-bold grad-text text-lg">المحفظة الذكية</h2>
+        <main id="walletContent" class="hidden p-5 space-y-6 pb-32">
+            <h2 class="text-center font-bold grad-text text-xl uppercase tracking-widest">المحفظة الذكية</h2>
             <div class="flex gap-4">
-                <button onclick="openWalletModal('deposit')" class="flex-1 bg-blue-600 py-4 rounded-2xl font-bold text-xs">إيداع</button>
-                <button onclick="openWalletModal('withdraw')" class="flex-1 bg-zinc-900 py-4 rounded-2xl font-bold text-xs border border-white/5">سحب</button>
+                <button onclick="openWalletModal('deposit')" class="flex-1 btn-grad py-4 rounded-2xl font-bold shadow-lg">إيداع</button>
+                <button onclick="openWalletModal('withdraw')" class="flex-1 glass py-4 rounded-2xl font-bold shadow-lg">سحب</button>
             </div>
-            <div class="glass p-5 rounded-3xl">
-                <h4 class="text-[10px] font-bold mb-4">📈 سجل العمليات</h4>
-                <div id="logList" class="space-y-3 max-h-[350px] overflow-y-auto"></div>
-            </div>
+            <div class="glass p-5 rounded-3xl"><h4 class="text-[10px] font-bold mb-4 opacity-40 uppercase">سجل العمليات المكتملة</h4><div id="logList" class="space-y-3"></div></div>
         </main>
 
-        <nav class="fixed bottom-0 inset-x-0 glass flex justify-around p-4 rounded-t-[2.5rem] border-t border-white/5 z-[100]">
-            <button onclick="switchTab('home')" id="homeBtn" class="nav-btn active flex flex-col items-center gap-1">
-                <span class="text-xl">🏠</span><span class="text-[8px] font-bold">الرئيسية</span>
-            </button>
-            <button onclick="openModal('team')" id="teamBtn" class="nav-btn flex flex-col items-center gap-1">
-                <span class="text-xl">👥</span><span class="text-[8px] font-bold">الفريق</span>
-            </button>
-            <button onclick="switchTab('wallet')" id="walletBtn" class="nav-btn flex flex-col items-center gap-1">
-                <span class="text-xl">💳</span><span class="text-[8px] font-bold">المحفظة</span>
-            </button>
+        <nav class="nav-bar glass border-white/10 shadow-2xl">
+            <button onclick="switchTab('home')" id="homeBtn" class="nav-btn active"><span class="text-2xl">🏠</span><span class="text-[8px] font-bold">الرئيسية</span></button>
+            <button onclick="openModal('team')" id="teamBtn" class="nav-btn"><span class="text-2xl">👥</span><span class="text-[8px] font-bold">الفريق</span></button>
+            <button onclick="switchTab('wallet')" id="walletBtn" class="nav-btn"><span class="text-2xl">💳</span><span class="text-[8px] font-bold">المحفظة</span></button>
         </nav>
     </div>
 
-    <div id="modal" class="hidden fixed inset-0 bg-black/98 z-[500] flex items-center justify-center p-4">
-        <div class="glass p-8 rounded-[3rem] w-full max-w-sm relative">
-            <span onclick="closeModal()" class="absolute top-6 left-6 text-2xl cursor-pointer text-gray-400">×</span>
-            <div id="modalBody" class="mt-4 text-right overflow-y-auto max-h-[75vh]"></div>
+    <div id="modal" class="hidden fixed inset-0 bg-black/95 z-[1500] flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="glass p-8 rounded-[3.5rem] w-full max-w-sm relative shadow-2xl border-blue-500/20">
+            <span onclick="closeModal()" class="absolute top-6 left-6 text-3xl cursor-pointer text-gray-500">×</span><div id="modalBody" class="mt-4 text-right overflow-y-auto max-h-[75vh]"></div>
         </div>
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAjn2WNPRb_edcRIx8U7WRKsH5-wUYS7lA",
-            authDomain: "kaajjoo-9e88a.firebaseapp.com",
-            databaseURL: "https://kaajjoo-9e88a-default-rtdb.firebaseio.com",
-            projectId: "kaajjoo-9e88a",
-            storageBucket: "kaajjoo-9e88a.appspot.com",
-        };
+        const firebaseConfig = { apiKey: "AIzaSyAjn2WNPRb_edcRIx8U7WRKsH5-wUYS7lA", authDomain: "kaajjoo-9e88a.firebaseapp.com", databaseURL: "https://kaajjoo-9e88a-default-rtdb.firebaseio.com", projectId: "kaajjoo-9e88a", storageBucket: "kaajjoo-9e88a.appspot.com" };
         firebase.initializeApp(firebaseConfig);
         const rdb = firebase.database();
-        let userSession = null;
-        let serverTimeOffset = 0;
-
-        const VIP_PLANS = [
-            {l:1, p:50, r:1.5}, {l:2, p:100, r:3.5}, {l:3, p:500, r:20}, 
-            {l:4, p:1000, r:45}, {l:5, p:1500, r:75}, {l:6, p:2000, r:110}, {l:7, p:2500, r:150}
-        ];
+        let userSession = null; let serverTimeOffset = 0;
+        const VIP_PLANS = [ {l:1, p:50, r:1.5}, {l:2, p:100, r:3.5}, {l:3, p:500, r:20}, {l:4, p:1000, r:45}, {l:5, p:1500, r:75}, {l:6, p:2000, r:110}, {l:7, p:2500, r:150} ];
 
         window.onload = () => {
             rdb.ref(".info/serverTimeOffset").on("value", s => serverTimeOffset = s.val() || 0);
-            setTimeout(() => {
-                document.getElementById('securityCheck').classList.add('hidden');
-                const s = localStorage.getItem('shamil_session');
-                if(s) { userSession = JSON.parse(s); startPlatform(); } 
-                else { document.getElementById('authPage').classList.remove('hidden'); }
+            setTimeout(() => { 
+                document.getElementById('securityCheck').classList.add('hidden'); 
+                const s = localStorage.getItem('shamil_session'); 
+                if(s) { 
+                    const storedUser = JSON.parse(s);
+                    checkBanStatusAndStart(storedUser.username);
+                } else { 
+                    document.getElementById('authPage').classList.remove('hidden'); 
+                } 
             }, 2000);
         };
 
-        function startPlatform() {
-            document.getElementById('authPage').classList.add('hidden');
-            document.getElementById('mainPage').classList.remove('hidden');
-            initSlider(); renderVIP(); startLiveTimer();
-            
-            rdb.ref('users/' + userSession.username).on('value', snap => {
-                const d = snap.val(); if(!d) return;
-                userSession = d;
-                document.getElementById('uNameDisp').innerText = d.username;
-                document.getElementById('uBalDisp').innerText = `$${(d.balance || 0).toFixed(2)}`;
-                document.getElementById('uCountDisp').innerText = (d.activePlans || []).length;
-                document.getElementById('topImg').src = d.img || "";
-                
-                let totalDailyProfit = 0;
-                (d.activePlans || []).forEach(p => totalDailyProfit += p.profit);
-                document.getElementById('uTotalProfitDisp').innerText = `$${totalDailyProfit.toFixed(2)}`;
-                
-                const hasPlans = (d.activePlans || []).length > 0;
-                document.getElementById('glowRing').classList.toggle('hidden', !hasPlans);
-                document.getElementById('timerStatus').innerText = hasPlans ? "جاري تجميع الأرباح..." : "لا يوجد اشتراك نشط";
-                if(hasPlans) checkProfitCycle(d, totalDailyProfit);
-            });
-            loadHistory(); loadNotifications();
-        }
-
-        function initSlider() {
-            const container = document.getElementById('slider');
-            const images = [
-                "https://images.unsplash.com/photo-1611974715853-2b8ef9a3d136?w=600", "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=600",
-                "https://images.unsplash.com/photo-1621761191319-c6fb6200404a?w=600", "https://images.unsplash.com/photo-1633158829585-23bb8f628e3c?w=600",
-                "https://images.unsplash.com/photo-1644088379091-d574269d422f?w=600", "https://images.unsplash.com/photo-1634117622592-114e3024ff27?w=600",
-                "https://images.unsplash.com/photo-1640344583441-739881f94caf?w=600", "https://images.unsplash.com/photo-1620321023374-45275567106a?w=600",
-                "https://images.unsplash.com/photo-1639322537228-f710d846310a?w=600", "https://images.unsplash.com/photo-1614064641935-4475e83bb99e?w=600"
-            ];
-            container.innerHTML = images.map((src, i) => `<div class="slide ${i === 0 ? 'active' : ''}" style="background-image: url('${src}')"></div>`).join('');
-            let cur = 0; setInterval(() => {
-                const s = document.querySelectorAll('.slide'); if(!s.length) return;
-                s[cur].classList.remove('active'); cur = (cur + 1) % s.length; s[cur].classList.add('active');
-            }, 4000);
-        }
-
-        function renderVIP() {
-            document.getElementById('vipGrid').innerHTML = VIP_PLANS.map(v => `
-                <div class="glass p-5 rounded-[2.5rem] text-center border-white/5">
-                    <p class="text-[8px] text-blue-400 font-bold uppercase">VIP $${v.p}</p>
-                    <p class="text-lg font-bold mt-1">$${v.p}</p>
-                    <p class="text-[8px] text-green-400 mb-4 font-bold">+$${v.r} يومياً</p>
-                    <button onclick="buyPlan(${v.l},${v.p},${v.r})" class="w-full bg-blue-600/10 border border-blue-600/30 py-2.5 rounded-xl text-[8px] font-bold active:bg-blue-600 transition">تفعيل</button>
-                </div>`).join('');
-        }
-
-        function buyPlan(l, p, r) {
-            if(userSession.balance < p) return alert("الرصيد غير كافٍ");
-            const newPlan = { level: l, price: p, profit: r, date: firebase.database.ServerValue.TIMESTAMP };
-            rdb.ref('users/' + userSession.username).update({
-                balance: userSession.balance - p,
-                activePlans: [...(userSession.activePlans || []), newPlan],
-                lastProfitTime: userSession.lastProfitTime || firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
-                sendNotif(userSession.username, `✅ اشتراك ناجح في باقة $${p}`);
-                alert("🎉 مبروك! تم تفعيل الباقة بنجاح.");
-            });
-        }
-
-        function checkProfitCycle(d, total) {
-            const now = Date.now() + serverTimeOffset;
-            const last = d.lastProfitTime || 0;
-            if (now - last >= 86400000) {
-                rdb.ref('users/' + d.username).update({
-                    balance: firebase.database.ServerValue.increment(total),
-                    lastProfitTime: firebase.database.ServerValue.TIMESTAMP
-                });
-                sendNotif(d.username, `💰 تم إيداع أرباح جميع باقاتك: $${total.toFixed(2)}`);
-            }
-        }
-
-        function openWalletModal(type) {
-            document.getElementById('modal').classList.remove('hidden');
-            const b = document.getElementById('modalBody');
-            if(type === 'deposit') {
-                b.innerHTML = `
-                <h3 class="font-bold mb-4 text-blue-400">إيداع USDT (TRC20)</h3>
-                <div class="space-y-3">
-                    <div class="p-3 bg-blue-600/10 border border-blue-600/20 rounded-xl text-[9px] text-center" onclick="copyText('0xd193a351f670d8e3014d27e92f475710e1fe7229')">
-                        <p class="text-blue-400">المحفظة (اضغط للنسخ):</p>
-                        <code class="block truncate">0xd193a351f670d8e3014d27e92f475710e1fe7229</code>
-                    </div>
-                    <input type="text" id="dU" value="${userSession.username}" class="input-grad" readonly>
-                    <input type="email" id="dE" value="${userSession.email}" class="input-grad" placeholder="البريد">
-                    <input type="tel" id="dP" value="${userSession.phone}" class="input-grad" placeholder="رقم الهاتف">
-                    <input type="text" id="dR" value="${userSession.myReferralCode}" class="input-grad" placeholder="رمز الإحالة">
-                    <input type="number" id="dA" placeholder="المبلغ دولار" class="input-grad">
-                    <input type="file" id="dI" accept="image/*" class="text-[9px]" onchange="previewImg(this, 'dPre')">
-                    <img id="dPre" class="w-20 h-20 rounded hidden mx-auto object-cover mt-2 border border-white/10">
-                    <button onclick="subDep()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold text-sm mt-4">إرسال طلب الإيداع</button>
-                </div>`;
-            } else {
-                b.innerHTML = `
-                <h3 class="font-bold mb-4 text-green-400">سحب (أقل مبلغ 50$)</h3>
-                <div class="space-y-3">
-                    <input type="text" id="wW" placeholder="رمز المحفظة USDT" class="input-grad">
-                    <input type="text" id="wR" value="${userSession.myReferralCode}" class="input-grad" placeholder="رقم الإحالة">
-                    <input type="tel" id="wP" value="${userSession.phone}" class="input-grad" placeholder="رقم الهاتف">
-                    <input type="text" id="wN" value="${userSession.username}" class="input-grad" placeholder="الاسم الكامل">
-                    <input type="number" id="wA" placeholder="المبلغ المطلوب" class="input-grad" oninput="calcWith(this.value)">
-                    <div class="p-3 bg-white/5 rounded-xl text-[8px] flex justify-between"><span>استقطاع ضريبة 10%</span><span id="tV">$0</span></div>
-                    <button onclick="subWith()" class="w-full bg-green-600 py-4 rounded-2xl font-bold text-xs mt-4">تأكيد طلب السحب</button>
-                </div>`;
-            }
-        }
-
-        function subDep() {
-            const a = document.getElementById('dA').value;
-            const img = document.getElementById('dPre').src;
-            const u = document.getElementById('dU').value;
-            const e = document.getElementById('dE').value;
-            const p = document.getElementById('dP').value;
-            if(!a || !u || !e || !p || img.includes('flaticon')) return alert("يرجى ملء كافة الحقول ورفع الصورة");
-            rdb.ref('transactions').push({ username: u, email: e, phone: p, amount: a, type: 'deposit', status: 'pending', image: img, time: firebase.database.ServerValue.TIMESTAMP }).then(() => {
-                sendNotif(userSession.username, `⏳ طلب إيداع بقيمة $${a} قيد المراجعة.`);
-                alert("تم الإرسال بنجاح"); closeModal();
-            });
-        }
-
-        function subWith() {
-            const a = parseFloat(document.getElementById('wA').value);
-            const w = document.getElementById('wW').value;
-            if(!w || a < 50 || userSession.balance < a) return alert("الرصيد غير كافٍ أو أقل من 50$");
-            rdb.ref('users/' + userSession.username).update({ balance: userSession.balance - a });
-            rdb.ref('transactions').push({ username: userSession.username, amount: a, net: a*0.9, type: 'withdraw', status: 'pending', time: firebase.database.ServerValue.TIMESTAMP, wallet: w }).then(() => {
-                sendNotif(userSession.username, `🚀 تم إرسال طلب سحب بقيمة $${a}.`);
-                alert("تم إرسال الطلب"); closeModal();
-            });
-        }
-
-        function openModal(type) {
-            document.getElementById('modal').classList.remove('hidden');
-            const b = document.getElementById('modalBody');
-            if(type === 'team') {
-                b.innerHTML = `<h3 class="font-bold mb-4 text-blue-400">فريقي</h3><div class="space-y-2" id="tList">جاري التحميل...</div>`;
-                rdb.ref('teams/' + userSession.username).once('value', s => {
-                    const l = document.getElementById('tList'); l.innerHTML = "";
-                    if(!s.exists()) { l.innerHTML = "<p class='text-[10px] text-gray-500'>لا يوجد أعضاء في فريقك حالياً</p>"; return; }
-                    s.forEach(c => { l.innerHTML += `<div class="p-3 bg-white/5 rounded-xl text-[9px] flex justify-between"><span>👤 ${c.val().username}</span><span>${new Date(c.val().date).toLocaleDateString()}</span></div>`; });
-                });
-            } else if(type === 'support') {
-                b.innerHTML = `<h3 class="font-bold mb-4 text-blue-400">الدعم المباشر</h3><p class="text-[10px] text-gray-400 mb-4">تواصل معنا لحل أي مشكلة</p>
-                <a href="https://t.me/Dana00a" class="block w-full bg-blue-600 p-4 rounded-2xl text-center font-bold text-xs">تليجرام المطور</a>`;
-            } else if(type === 'profile') {
-                b.innerHTML = `<div class="text-center space-y-4">
-                    <div class="relative w-24 h-24 mx-auto">
-                        <img id="pImg" src="${userSession.img}" class="w-full h-full rounded-full object-cover border-2 border-blue-600">
-                        <label class="absolute bottom-0 right-0 bg-blue-600 p-1 rounded-full cursor-pointer text-[10px]">📷<input type="file" class="hidden" onchange="changeProf(this)"></label>
-                    </div>
-                    <h4 class="font-bold">${userSession.username}</h4>
-                    <div class="text-[10px] text-right bg-white/5 p-4 rounded-2xl space-y-1">
-                        <p>📧 ${userSession.email}</p><p>📞 ${userSession.phone}</p><p>🆔 الإحالة: ${userSession.myReferralCode}</p>
-                    </div>
-                    <button onclick="logout()" class="w-full bg-red-600/20 text-red-500 py-3 rounded-xl font-bold text-xs">تسجيل خروج</button>
-                </div>`;
-            } else if(type === 'notifications') {
-                b.innerHTML = `<h3 class="font-bold mb-4">مركز التنبيهات</h3><div id="nList" class="space-y-2"></div>`;
-                loadNotifications(true);
-            } else if(type === 'subDetails') {
-                b.innerHTML = `<h3 class="font-bold mb-4 text-center">اشتراكاتك النشطة</h3>`;
-                (userSession.activePlans || []).forEach(p => {
-                    b.innerHTML += `<div class="p-3 bg-white/5 rounded-xl mb-2 text-[9px] border-r-4 border-blue-600">باقة VIP $${p.price} | ربح $${p.profit}</div>`;
-                });
-            }
-        }
-
-        function changeProf(input) {
-            if (input.files && input.files[0]) {
-                const r = new FileReader(); r.onload = (e) => {
-                    rdb.ref('users/' + userSession.username).update({ img: e.target.result });
-                    document.getElementById('pImg').src = e.target.result;
-                    document.getElementById('topImg').src = e.target.result;
-                }; r.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function loadNotifications(render = false) {
-            rdb.ref('notifications/' + userSession.username).on('value', s => {
-                document.getElementById('notifBadge').innerText = s.numChildren();
-                document.getElementById('notifBadge').classList.toggle('hidden', s.numChildren() === 0);
-                if(render) {
-                    const l = document.getElementById('nList'); l.innerHTML = "";
-                    const data = []; s.forEach(c => data.push(c.val()));
-                    data.reverse().forEach(n => { l.innerHTML += `<div class="p-3 bg-white/5 rounded-xl text-[8px]">${n.msg}<br><span class="opacity-30 text-[6px]">${new Date(n.time).toLocaleString()}</span></div>`; });
+        function checkBanStatusAndStart(username) {
+            rdb.ref('users/' + username).on('value', snap => {
+                const d = snap.val();
+                if(d && d.isBanned === true) {
+                    document.getElementById('banOverlay').classList.remove('hidden');
+                    document.getElementById('mainPage').classList.add('hidden');
+                    document.getElementById('authPage').classList.add('hidden');
+                } else {
+                    document.getElementById('banOverlay').classList.add('hidden');
+                    userSession = d;
+                    startPlatform();
                 }
             });
         }
 
-        function loadHistory() {
-            rdb.ref('transactions').on('value', snap => {
-                const list = document.getElementById('logList'); list.innerHTML = "";
-                snap.forEach(c => {
-                    const t = c.val(); if(t.username === userSession.username) {
-                        list.innerHTML += `<div class="p-3 bg-white/5 rounded-2xl flex justify-between items-center mb-2">
-                            <div><p class="text-[9px] font-bold">${t.type==='deposit'?'إيداع':'سحب'}</p><p class="text-[7px] opacity-40">${new Date(t.time).toLocaleDateString()}</p></div>
-                            <div class="text-left font-bold"><p class="text-[9px]">$${t.amount}</p><p class="text-[7px] ${t.status==='pending'?'text-yellow-500':'text-green-500'}">${t.status}</p></div></div>`;
-                    }
-                });
+        function startPlatform() {
+            document.getElementById('authPage').classList.add('hidden'); document.getElementById('mainPage').classList.remove('hidden');
+            initSlider(); renderVIP(); startLiveTimer();
+            rdb.ref('users/' + userSession.username).on('value', snap => {
+                const d = snap.val(); if(!d) return; userSession = d;
+                document.getElementById('uNameDisp').innerText = d.username;
+                document.getElementById('uRefDisp').innerText = d.myReferralCode || "000000";
+                document.getElementById('uBalDisp').innerText = `$${(d.balance || 0).toFixed(2)}`;
+                document.getElementById('uCountDisp').innerText = (d.activePlans || []).length;
+                document.getElementById('topImg').src = d.img || "";
+                let total = 0; (d.activePlans || []).forEach(p => total += p.profit);
+                document.getElementById('uTotalProfitDisp').innerText = `$${total.toFixed(2)}`;
+                document.getElementById('glowRing').classList.toggle('hidden', (d.activePlans || []).length === 0);
+                if((d.activePlans || []).length > 0) checkProfitCycle(d, total);
             });
+            loadHistory(); loadNotifications();
         }
 
-        function startLiveTimer() {
-            setInterval(() => {
-                const n = new Date(Date.now() + serverTimeOffset);
-                document.getElementById('timerVal').innerText = `${(23-n.getHours()).toString().padStart(2,'0')}:${(59-n.getMinutes()).toString().padStart(2,'0')}:${(59-n.getSeconds()).toString().padStart(2,'0')}`;
-            }, 1000);
+        function openModal(type) {
+            document.getElementById('modal').classList.remove('hidden'); const b = document.getElementById('modalBody');
+            if(type === 'team') {
+                b.innerHTML = `<h3 class="font-bold mb-6 text-blue-400 text-center">مركز الفريق</h3><div id="tList" class="space-y-3">جاري جلب البيانات...</div>`;
+                rdb.ref('teams/' + userSession.username).on('value', s => {
+                    const l = document.getElementById('tList'); l.innerHTML = "";
+                    if(!s.exists()) { l.innerHTML = "<p class='text-center opacity-30'>لم ينضم أحد لفريقك بعد</p>"; return; }
+                    s.forEach(c => {
+                        const mName = c.val().username || c.key;
+                        rdb.ref('users/' + mName).once('value', us => {
+                            const d = us.val();
+                            const isAct = d && d.activePlans && d.activePlans.length > 0;
+                            l.innerHTML += `<div class="team-card animate__animated animate__fadeIn">
+                                <div><span class="status-dot" style="color: ${isAct?'#4ade80':'#6b7280'}"></span><span class="font-bold text-sm">${mName}</span></div>
+                                <span class="text-[9px] ${isAct?'text-green-400':'text-gray-500'} font-bold">${isAct?'نشط':'خامل'}</span>
+                            </div>`;
+                        });
+                    });
+                });
+            } else if(type === 'profile') {
+                b.innerHTML = `<div class="text-center space-y-4"><div class="relative w-24 h-24 mx-auto"><img id="pImg" src="${userSession.img}" class="w-full h-full rounded-full object-cover border-4 border-blue-500/20"><label class="absolute bottom-0 right-0 bg-blue-600 p-1 rounded-full cursor-pointer text-[10px]">📷<input type="file" class="hidden" onchange="changeProf(this)"></label></div><h4 class="font-bold text-lg">${userSession.username}</h4><div class="text-[10px] text-right glass p-5 rounded-3xl space-y-2"><p>📧 البريد: ${userSession.email}</p><p>📞 الهاتف: ${userSession.phone}</p><p class="text-yellow-500 font-bold">🆔 رمز إحالتك: ${userSession.myReferralCode}</p></div><button onclick="logout()" class="w-full bg-red-600/10 text-red-500 py-4 rounded-2xl font-bold text-xs border border-red-500/20 shadow-lg">تسجيل خروج آمن</button></div>`;
+            } else if(type === 'notifications') {
+                b.innerHTML = `<h3 class="font-bold mb-4 text-blue-400">الإشعارات</h3><div id="nList" class="space-y-3"></div>`;
+                rdb.ref('notifications/' + userSession.username).on('value', s => {
+                    const l = document.getElementById('nList'); l.innerHTML = "";
+                    s.forEach(c => { const n = c.val(); l.innerHTML = `<div class="p-4 glass rounded-2xl text-[10px] animate__animated animate__fadeInDown"><div>${n.msg || n.text}</div><span class="opacity-30 text-[8px] mt-1 block">${new Date(n.time).toLocaleString()}</span></div>` + l.innerHTML; });
+                });
+            } else if(type === 'support') { b.innerHTML = `<h3 class="font-bold mb-4 text-blue-400">الدعم الفني</h3><p class="text-[10px] text-gray-400 text-center mb-6">هل تواجه مشكلة؟ فريقنا مستعد للمساعدة</p><a href="https://t.me/Dana00a" class="block w-full btn-grad p-4 rounded-2xl text-center font-bold text-xs shadow-lg transition">مراسلة المطور عبر تليجرام</a>`; }
+            else if(type === 'subDetails') { b.innerHTML = `<h3 class="font-bold mb-4 text-center">اشتراكاتي</h3>`; (userSession.activePlans || []).forEach(p => { b.innerHTML += `<div class="p-4 glass rounded-2xl mb-2 text-[10px] border-r-4 border-blue-500 font-bold">VIP $${p.price} | ربح يومي $${p.profit}</div>`; }); }
         }
 
+        function openWalletModal(type) {
+            document.getElementById('modal').classList.remove('hidden'); const b = document.getElementById('modalBody');
+            if(type === 'deposit') {
+                b.innerHTML = `<h3 class="font-bold mb-6 text-blue-400 uppercase tracking-widest text-center">إيداع رصيد (USDT)</h3><div class="space-y-4"><div class="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl text-[9px] text-center" onclick="copyText('0xd193a351f670d8e3014d27e92f475710e1fe7229')"><p class="text-blue-300 mb-1">عنوان المحفظة (اضغط للنسخ)</p><code class="block truncate font-bold">0xd193a351f670d8e3014d27e92f475710e1fe7229</code></div><input type="text" id="dU" value="${userSession.username}" class="input-grad" readonly><input type="email" id="dE" value="${userSession.email}" class="input-grad" placeholder="البريد"><input type="tel" id="dP" value="${userSession.phone}" class="input-grad" placeholder="الهاتف"><input type="number" id="dA" placeholder="أدخل المبلغ دولار" class="input-grad"><div class="text-right"><p class="text-[9px] opacity-40 mb-1">ارفع لقطة شاشة للتحويل:</p><input type="file" id="dI" accept="image/*" onchange="previewImg(this, 'dPre')" class="text-[9px]"></div><img id="dPre" class="w-24 h-24 hidden mx-auto rounded-xl border mt-2 border-white/10 shadow-lg"><button onclick="submitDeposit()" class="w-full btn-grad py-4 rounded-2xl font-bold shadow-xl">إرسال الطلب للمراجعة</button></div>`;
+            } else {
+                b.innerHTML = `<h3 class="font-bold mb-6 text-green-400 text-center uppercase tracking-widest">سحب أرباح (Min 50$)</h3><div class="space-y-4"><input type="text" id="wW" placeholder="عنوان محفظة المستلم (USDT)" class="input-grad"><input type="text" id="wN" value="${userSession.username}" class="input-grad" readonly><input type="number" id="wA" placeholder="المبلغ المطلوب سحبه" class="input-grad" oninput="calcWith(this.value)"><div class="p-4 glass rounded-2xl text-[10px] flex justify-between"><span>ضريبة السحب 10%:</span><span id="tV" class="text-red-400 font-bold">$0</span></div><button onclick="submitWithdraw()" class="w-full btn-grad py-4 rounded-2xl font-bold shadow-xl">تأكيد طلب السحب</button></div>`;
+            }
+        }
+
+        function submitDeposit() { const a = document.getElementById('dA').value; const img = document.getElementById('dPre').src; if(!a || img.includes('flaticon')) return alert("يرجى ملء الحقول ورفع صورة الإثبات"); rdb.ref('transactions').push({ username: userSession.username, amount: a, type: 'deposit', status: 'pending', image: img, time: firebase.database.ServerValue.TIMESTAMP }).then(() => { sendNotif(userSession.username, `⏳ طلب إيداع بقيمة $${a} قيد المراجعة`); alert("تم الإرسال بنجاح"); closeModal(); }); }
+        function submitWithdraw() { const a = parseFloat(document.getElementById('wA').value); const w = document.getElementById('wW').value; if(!w || a < 50 || userSession.balance < a) return alert("الرصيد غير كافٍ أو أقل من الحد الأدنى"); rdb.ref('users/' + userSession.username).update({ balance: userSession.balance - a }); rdb.ref('transactions').push({ username: userSession.username, amount: a, net: a*0.9, type: 'withdraw', status: 'pending', time: firebase.database.ServerValue.TIMESTAMP, wallet: w }).then(() => { sendNotif(userSession.username, `🚀 تم إرسال طلب سحب بقيمة $${a} بنجاح`); alert("تم خصم المبلغ وإرسال الطلب"); closeModal(); }); }
+        function initSlider() { const c = document.getElementById('slider'); const imgs = ["https://images.unsplash.com/photo-1611974715853-2b8ef9a3d136?w=600","https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=600","https://images.unsplash.com/photo-1621761191319-c6fb6200404a?w=600","https://images.unsplash.com/photo-1633158829585-23bb8f628e3c?w=600","https://images.unsplash.com/photo-1644088379091-d574269d422f?w=600","https://images.unsplash.com/photo-1634117622592-114e3024ff27?w=600","https://images.unsplash.com/photo-1640344583441-739881f94caf?w=600","https://images.unsplash.com/photo-1620321023374-45275567106a?w=600","https://images.unsplash.com/photo-1639322537228-f710d846310a?w=600","https://images.unsplash.com/photo-1614064641935-4475e83bb99e?w=600"]; c.innerHTML = imgs.map((s,i)=>`<div class="slide ${i===0?'active':''}" style="background-image:url('${s}')"></div>`).join(''); let cur=0; setInterval(()=>{const s=document.querySelectorAll('.slide'); if(!s.length)return; s[cur].classList.remove('active'); cur=(cur+1)%s.length; s[cur].classList.add('active');},4000); }
+        function renderVIP() { document.getElementById('vipGrid').innerHTML = VIP_PLANS.map(v => `<div class="glass p-5 rounded-[2.5rem] text-center border-white/5 shadow-xl transition active:scale-95"><p class="text-[9px] text-blue-400 font-bold uppercase tracking-widest">VIP $${v.p}</p><p class="text-xl font-bold mt-2">$${v.p}</p><p class="text-[10px] text-green-400 mb-5 font-bold">+$${v.r} يومياً</p><button onclick="buyPlan(${v.l},${v.p},${v.r})" class="w-full btn-grad py-3 rounded-2xl text-[9px] font-bold uppercase">اشتراك</button></div>`).join(''); }
+        function buyPlan(l,p,r) { if(userSession.balance < p) return alert("الرصيد غير كافٍ"); rdb.ref('users/'+userSession.username).update({ balance: userSession.balance-p, activePlans: [...(userSession.activePlans || []), {level:l, price:p, profit:r, date: firebase.database.ServerValue.TIMESTAMP}], lastProfitTime: userSession.lastProfitTime || firebase.database.ServerValue.TIMESTAMP }).then(() => { sendNotif(userSession.username, `✅ مبروك! قمت بالاشتراك في باقة $${p}`); alert("تم الاشتراك بنجاح!"); }); }
+        function checkProfitCycle(d, total) { const now=Date.now()+serverTimeOffset; const last=d.lastProfitTime||0; if (now-last >= 86400000) { rdb.ref('users/'+d.username).update({ balance: firebase.database.ServerValue.increment(total), lastProfitTime: firebase.database.ServerValue.TIMESTAMP }); sendNotif(d.username, `💰 تم إيداع أرباح جميع باقاتك المجمعة: $${total.toFixed(2)}`); } }
+        function loadHistory() { rdb.ref('transactions').on('value', snap => { const list=document.getElementById('logList'); list.innerHTML=""; snap.forEach(c => { const t=c.val(); if(t.username===userSession.username) list.innerHTML += `<div class="p-4 glass rounded-3xl flex justify-between mb-3 border-r-4 ${t.type==='deposit'?'border-blue-500':'border-green-500'}"><div><p class="font-bold uppercase text-[9px] tracking-widest">${t.type==='deposit'?'إيداع':'سحب'}</p><p class="text-[7px] opacity-40">${new Date(t.time).toLocaleDateString()}</p></div><div class="text-left font-bold"><p class="text-[9px]">$${t.amount}</p><p class="text-[7px] uppercase ${t.status==='pending'?'text-yellow-500':'text-green-500'}">${t.status}</p></div></div>`; }); }); }
+        function startLiveTimer() { setInterval(() => { const n = new Date(Date.now() + serverTimeOffset); document.getElementById('timerVal').innerText = `${(23-n.getHours()).toString().padStart(2,'0')}:${(59-n.getMinutes()).toString().padStart(2,'0')}:${(59-n.getSeconds()).toString().padStart(2,'0')}`; }, 1000); }
+        function loadNotifications() { rdb.ref('notifications/'+userSession.username).on('value', s => { const b=document.getElementById('notifBadge'); if(b) { b.innerText=s.numChildren(); b.classList.toggle('hidden', s.numChildren()===0); } }); }
         function calcWith(v) { document.getElementById('tV').innerText = '$' + (parseFloat(v)*0.1 || 0).toFixed(1); }
-        function copyText(t) { navigator.clipboard.writeText(t).then(() => alert("تم النسخ للمحفظة")); }
+        function copyRef() { navigator.clipboard.writeText(userSession.myReferralCode).then(() => alert("تم نسخ رمز الإحالة بنجاح!")); }
+        function copyText(t) { navigator.clipboard.writeText(t).then(() => alert("تم نسخ عنوان المحفظة!")); }
         function switchTab(t) { document.getElementById('homeContent').classList.toggle('hidden', t !== 'home'); document.getElementById('walletContent').classList.toggle('hidden', t !== 'wallet'); document.getElementById('homeBtn').classList.toggle('active', t === 'home'); document.getElementById('walletBtn').classList.toggle('active', t === 'wallet'); }
         function previewImg(i, t) { if (i.files && i.files[0]) { const r = new FileReader(); r.onload = (e) => { const el = document.getElementById(t); el.src = e.target.result; el.classList.remove('hidden'); }; r.readAsDataURL(i.files[0]); } }
         function sendNotif(u, m) { rdb.ref('notifications/' + u).push({ msg: m, time: firebase.database.ServerValue.TIMESTAMP }); }
         function toggleAuth(r) { document.getElementById('loginForm').classList.toggle('hidden', r); document.getElementById('regForm').classList.toggle('hidden', !r); }
         function closeModal() { document.getElementById('modal').classList.add('hidden'); }
         function logout() { localStorage.clear(); location.reload(); }
-        
-        function register() {
-            const u = document.getElementById('regUser').value.trim();
-            const p = document.getElementById('regPass').value;
-            const ref = document.getElementById('regRef').value.trim();
-            const myRefCode = Math.floor(100000 + Math.random() * 900000).toString();
-            if(!u || p.length < 6) return alert("البيانات ناقصة أو كلمة المرور ضعيفة");
-            rdb.ref('users/' + u).set({
-                username: u, email: document.getElementById('regEmail').value, phone: document.getElementById('regPhone').value,
-                password: p, img: document.getElementById('regPreview').src, balance: 0, activePlans: [], myReferralCode: myRefCode, referredBy: ref || null
-            }).then(() => {
-                if(ref) {
-                    rdb.ref('users').once('value', sn => {
-                        sn.forEach(user => {
-                            if(user.val().myReferralCode === ref) {
-                                rdb.ref('teams/' + user.key + '/' + u).set({ username: u, date: firebase.database.ServerValue.TIMESTAMP });
-                            }
-                        });
-                    });
-                }
-                alert("تم إنشاء الحساب بنجاح!"); toggleAuth(false);
-            });
-        }
-
-        function login() {
-            const u = document.getElementById('logId').value;
-            const p = document.getElementById('logPass').value;
-            rdb.ref('users/' + u).once('value', s => {
-                if(s.exists() && s.val().password === p) {
-                    localStorage.setItem('shamil_session', JSON.stringify(s.val()));
-                    location.reload();
-                } else alert("بيانات الدخول خاطئة");
-            });
-        }
+        function changeProf(input) { if (input.files && input.files[0]) { const r = new FileReader(); r.onload = (e) => { rdb.ref('users/' + userSession.username).update({ img: e.target.result }); document.getElementById('pImg').src = e.target.result; document.getElementById('topImg').src = e.target.result; }; r.readAsDataURL(input.files[0]); } }
+        function register() { const u=document.getElementById('regUser').value.trim(); const p=document.getElementById('regPass').value; const ref=document.getElementById('regRef').value.trim(); const myRefCode=Math.floor(100000+Math.random()*900000).toString(); if(!u || p.length < 6) return alert("البيانات ناقصة"); rdb.ref('users/'+u).set({ username: u, email: document.getElementById('regEmail').value, phone: document.getElementById('regPhone').value, password: p, img: "https://cdn-icons-png.flaticon.com/512/149/149071.png", balance: 0, activePlans: [], myReferralCode: myRefCode, referredBy: ref || null, isBanned: false }).then(() => { if(ref) { rdb.ref('users').once('value', sn => { sn.forEach(user => { if(user.val().myReferralCode === ref) rdb.ref('teams/'+user.key+'/'+u).set({ username: u, date: firebase.database.ServerValue.TIMESTAMP }); }); }); } alert("تم التسجيل بنجاح!"); toggleAuth(false); }); }
+        function login() { const u=document.getElementById('logId').value; const p=document.getElementById('logPass').value; rdb.ref('users/'+u).once('value', s => { if(s.exists() && s.val().password === p) { localStorage.setItem('shamil_session', JSON.stringify(s.val())); location.reload(); } else alert("خطأ في البيانات"); }); }
     </script>
 </body>
 </html>

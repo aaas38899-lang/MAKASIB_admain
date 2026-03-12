@@ -247,7 +247,38 @@
         function renderVIP() { document.getElementById('vipGrid').innerHTML = VIP_PLANS.map(v => `<div class="glass p-5 rounded-[2.5rem] text-center border-white/5 shadow-xl transition active:scale-95"><p class="text-[9px] text-blue-400 font-bold uppercase tracking-widest">VIP $${v.p}</p><p class="text-xl font-bold mt-2">$${v.p}</p><p class="text-[10px] text-green-400 mb-5 font-bold">+$${v.r} يومياً</p><button onclick="buyPlan(${v.l},${v.p},${v.r})" class="w-full btn-grad py-3 rounded-2xl text-[9px] font-bold uppercase">اشتراك</button></div>`).join(''); }
         function buyPlan(l,p,r) { if(userSession.balance < p) return alert("الرصيد غير كافٍ"); rdb.ref('users/'+userSession.username).update({ balance: userSession.balance-p, activePlans: [...(userSession.activePlans || []), {level:l, price:p, profit:r, date: firebase.database.ServerValue.TIMESTAMP}], lastProfitTime: userSession.lastProfitTime || firebase.database.ServerValue.TIMESTAMP }).then(() => { sendNotif(userSession.username, `✅ مبروك! قمت بالاشتراك في باقة $${p}`); alert("تم الاشتراك بنجاح!"); }); }
         function checkProfitCycle(d, total) { const now=Date.now()+serverTimeOffset; const last=d.lastProfitTime||0; if (now-last >= 86400000) { rdb.ref('users/'+d.username).update({ balance: firebase.database.ServerValue.increment(total), lastProfitTime: firebase.database.ServerValue.TIMESTAMP }); sendNotif(d.username, `💰 تم إيداع أرباح جميع باقاتك المجمعة: $${total.toFixed(2)}`); } }
-        function loadHistory() { rdb.ref('transactions').on('value', snap => { const list=document.getElementById('logList'); list.innerHTML=""; snap.forEach(c => { const t=c.val(); if(t.username===userSession.username) list.innerHTML += `<div class="p-4 glass rounded-3xl flex justify-between mb-3 border-r-4 ${t.type==='deposit'?'border-blue-500':'border-green-500'}"><div><p class="font-bold uppercase text-[9px] tracking-widest">${t.type==='deposit'?'إيداع':'سحب'}</p><p class="text-[7px] opacity-40">${new Date(t.time).toLocaleDateString()}</p></div><div class="text-left font-bold"><p class="text-[9px]">$${t.amount}</p><p class="text-[7px] uppercase ${t.status==='pending'?'text-yellow-500':'text-green-500'}">${t.status}</p></div></div>`; }); }); }
+        
+        // تعديل سجل العمليات ليظهر الحالات بالعربية
+        function loadHistory() { 
+            rdb.ref('transactions').on('value', snap => { 
+                const list=document.getElementById('logList'); 
+                list.innerHTML=""; 
+                snap.forEach(c => { 
+                    const t=c.val(); 
+                    if(t.username===userSession.username) {
+                        let statusText = "قيد المراجعة";
+                        let statusColor = "text-yellow-500";
+                        if(t.status === 'approved') { statusText = "تم الموافقة"; statusColor = "text-green-500"; }
+                        else if(t.status === 'rejected') { statusText = "مرفوض"; statusColor = "text-red-500"; }
+                        
+                        list.innerHTML += `<div class="p-4 glass rounded-3xl flex justify-between mb-3 border-r-4 ${t.type==='deposit'?'border-blue-500':'border-green-500'}"><div><p class="font-bold uppercase text-[9px] tracking-widest">${t.type==='deposit'?'إيداع':'سحب'}</p><p class="text-[7px] opacity-40">${new Date(t.time).toLocaleDateString()}</p></div><div class="text-left font-bold"><p class="text-[9px]">$${t.amount}</p><p class="text-[7px] uppercase ${statusColor}">${statusText}</p></div></div>`; 
+                    }
+                }); 
+            }); 
+            
+            // مراقبة التغييرات لإرسال إشعارات بالعربية عند الموافقة
+            rdb.ref('transactions').on('child_changed', snap => {
+                const t = snap.val();
+                if(t.username === userSession.username) {
+                    if(t.status === 'approved') {
+                        sendNotif(t.username, `✅ تم الموافقة على طلب ${t.type === 'deposit' ? 'الإيداع' : 'السحب'} بمبلغ $${t.amount}`);
+                    } else if(t.status === 'rejected') {
+                        sendNotif(t.username, `❌ نعتذر، تم رفض طلب ${t.type === 'deposit' ? 'الإيداع' : 'السحب'} بمبلغ $${t.amount}`);
+                    }
+                }
+            });
+        }
+
         function startLiveTimer() { setInterval(() => { const n = new Date(Date.now() + serverTimeOffset); document.getElementById('timerVal').innerText = `${(23-n.getHours()).toString().padStart(2,'0')}:${(59-n.getMinutes()).toString().padStart(2,'0')}:${(59-n.getSeconds()).toString().padStart(2,'0')}`; }, 1000); }
         function loadNotifications() { rdb.ref('notifications/'+userSession.username).on('value', s => { const b=document.getElementById('notifBadge'); if(b) { b.innerText=s.numChildren(); b.classList.toggle('hidden', s.numChildren()===0); } }); }
         function calcWith(v) { document.getElementById('tV').innerText = '$' + (parseFloat(v)*0.1 || 0).toFixed(1); }

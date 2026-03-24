@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Makasib Ultimate V4</title>
+    <title>Makasib Ultimate V5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -44,7 +44,7 @@
 
 <div id="loadingOverlay">
     <div class="ring"></div>
-    <h2 class="text-gold mt-4 font-black tracking-widest text-[10px]">MAKASIB ULTIMATE</h2>
+    <h2 class="text-gold mt-4 font-black tracking-widest text-[10px]">MAKASIB LOADING</h2>
 </div>
 
 <div id="authScreen" class="hidden fixed inset-0 z-[1000] bg-[#020617] flex items-center justify-center p-6 text-center">
@@ -94,7 +94,7 @@
         </div>
     </header>
 
-    <div class="marquee"><div class="marquee-text">🚀 مكاسب بريميوم: استثمر الآن بآمان وسرعة فائقة .. استمتع بباقات تصل إلى 2000$ وأرباح يومية مضمونة .. نظام إحالة متطور وعمولات فورية 🚀</div></div>
+    <div class="marquee"><div class="marquee-text">🚀 أهلاً بك في مكاسب V5 .. تم إصلاح سرعة الدخول وتحديث أنظمة السحب والإيداع لضمان أفضل تجربة استثمارية لك 🚀</div></div>
 
     <main class="p-2">
         <div id="home" class="tab-content active space-y-4">
@@ -192,28 +192,39 @@
 </div>
 
 <script>
+    // إعدادات Firebase
     const firebaseConfig = { apiKey: "AIzaSyAjn2WNPRb_edcRIx8U7WRKsH5-wUYS7lA", databaseURL: "https://kaajjoo-9e88a-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let uKey = localStorage.getItem('mk_user_key'), uData = null, fileData = "";
     const adminMail = "Saged5520y@gmail.com";
-    const appUsdtWallet = "TNc5yGf6...YOUR_USDT_WALLET_HERE"; // ضع محفظتك هنا
+    const appUsdtWallet = "TNc5yGf6...YOUR_USDT_WALLET_HERE";
 
+    // دالة البدء الأساسية
     async function init() {
         if(!uKey) {
             document.getElementById('loadingOverlay').style.display = 'none';
             document.getElementById('authScreen').classList.remove('hidden');
             return;
         }
+        // استخدام on بدلاً من once لضمان التحديث اللحظي بدون ريلود
         db.ref('users/'+uKey).on('value', async snap => {
             uData = snap.val();
             if(!uData) return logout();
             await checkProfitsSecurity();
             renderUI();
             document.getElementById('loadingOverlay').style.display = 'none';
+            document.getElementById('authScreen').classList.add('hidden'); // إخفاء شاشة الدخول تماماً
             document.getElementById('mainContent').classList.remove('hidden');
         });
+    }
+
+    // الانتقال السلس بدون ERR_CONNECTION
+    function authSuccess(key) {
+        localStorage.setItem('mk_user_key', key);
+        uKey = key;
+        init(); // استدعاء التهيئة مباشرة بدلاً من location.reload()
     }
 
     async function checkProfitsSecurity() {
@@ -342,7 +353,6 @@
                 <div id="methodInfo" class="hidden p-3 bg-gold/10 rounded-xl border border-gold/20 text-[8px] text-center text-gold"></div>
                 <input type="number" id="fAmt" placeholder="المبلغ ($)" class="w-full p-4 rounded-xl outline-none text-[10px]">
                 <input type="text" id="fAcc" placeholder="رقم المحفظة / الماستر / الكارت" class="w-full p-4 rounded-xl outline-none text-[10px]">
-                <div id="extraFields"></div>
                 <div onclick="document.getElementById('fFile').click()" class="border-2 border-dashed border-white/10 p-4 text-center cursor-pointer rounded-xl">
                     <input type="file" id="fFile" class="hidden" onchange="previewImg(this, 'fPrev')">
                     <img id="fPrev" class="hidden w-20 mx-auto rounded mb-2">
@@ -483,7 +493,6 @@
         });
     }
 
-    // --- الإشعارات ووظائف عامة ---
     async function addNotif(title, body) {
         await db.ref('notifications').push({ uid: uKey, title, body, time: new Date().toLocaleTimeString('ar-EG'), read: false, ts: Date.now() });
     }
@@ -536,23 +545,24 @@
             r.onload = e => { 
                 fileData = e.target.result; 
                 const im = document.getElementById(id); im.src = e.target.result; im.classList.remove('hidden'); 
-                if(document.getElementById('regPlaceholder')) document.getElementById('regPlaceholder').classList.add('hidden');
             };
             r.readAsDataURL(inp.files[0]);
         }
     }
 
+    // تعديل دالة الدخول لحل مشكلة ERR_CONNECTION
     async function login() {
         const u = document.getElementById('logUser').value, p = document.getElementById('logPass').value;
         if(!u || !p) return;
         document.getElementById('loadingOverlay').style.display = 'flex';
         db.ref('users').once('value', snap => {
             let key = null; snap.forEach(c => { if((c.val().email===u || c.val().phone===u) && c.val().password===p) key = c.key; });
-            if(key) { localStorage.setItem('mk_user_key', key); location.reload(); }
+            if(key) { authSuccess(key); }
             else { alert("خطأ!"); document.getElementById('loadingOverlay').style.display = 'none'; }
         });
     }
 
+    // تعديل دالة التسجيل لحل مشكلة ERR_CONNECTION
     async function register() {
         const n = document.getElementById('regName').value, e = document.getElementById('regEmail').value, ph = document.getElementById('regPhone').value, ps = document.getElementById('regPass').value, ref = document.getElementById('regRef').value;
         if(!n || !e || !ph || !ps || !fileData) return alert("أكمل البيانات");
@@ -560,7 +570,7 @@
         const code = Math.floor(100000 + Math.random() * 900000).toString();
         const res = db.ref('users').push();
         await res.set({ username: n, email: e, phone: ph, password: ps, img: fileData, myRefCode: code, referredBy: ref, balance: 0, totalProfits: 0, activePlansDetails: [], lastProfitTime: Date.now() });
-        localStorage.setItem('mk_user_key', res.key); location.reload();
+        authSuccess(res.key);
     }
 
     function toggleAuth(reg) { document.getElementById('loginForm').classList.toggle('hidden', reg); document.getElementById('registerForm').classList.toggle('hidden', !reg); }

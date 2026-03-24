@@ -3,635 +3,571 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Makasib | Premium Secure</title>
+    <title>Makasib Ultimate V4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <style>
-        :root { --p-gold: #fbbf24; --p-dark: #0f172a; }
+        :root { --gold: #d4af37; --blue: #1e3a8a; --dark: #020617; }
         body { 
-            font-family: 'Cairo', sans-serif; margin: 0; color: #fff;
-            background: linear-gradient(-45deg, #0f172a, #1e293b, #1e1b4b, #312e81);
-            background-size: 400% 400%; animation: gradientBG 12s ease infinite;
-            user-select: none; -webkit-tap-highlight-color: transparent; overflow-x: hidden;
+            font-family: 'Cairo', sans-serif; background: var(--dark); color: #fff; margin: 0;
+            background: radial-gradient(circle at top, #1e3a8a, #020617, #000);
+            background-attachment: fixed; overflow-x: hidden; font-size: 11px;
         }
-        @keyframes gradientBG { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
-
-        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1.5rem; }
-        .nav-glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(15px); border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(212, 175, 55, 0.1); border-radius: 20px; }
+        .btn-gold { background: linear-gradient(135deg, #d4af37, #f59e0b); color: #000; font-weight: 900; transition: 0.3s; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
+        .btn-gold:active { transform: scale(0.95); }
         
-        #slider { height: 130px; position: relative; overflow: hidden; border-radius: 1.2rem; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); }
-        .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; background-size: contain; background-position: center; background-repeat: no-repeat; }
+        #sliderContainer { height: 180px; border-radius: 20px; overflow: hidden; position: relative; margin: 10px; border: 1px solid rgba(212,175,55,0.2); }
+        .slide { position: absolute; inset: 0; opacity: 0; transition: 1s ease-in-out; background-size: cover; background-position: center; }
         .slide.active { opacity: 1; }
 
-        .info-card { background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(255, 255, 255, 0.05)); border: 1px solid rgba(251, 191, 36, 0.3); position: relative; overflow: hidden; }
-        .info-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(251,191,36,0.1) 0%, transparent 70%); animation: rotate 10s linear infinite; }
+        .marquee { width: 100%; overflow: hidden; background: rgba(212, 175, 55, 0.1); padding: 8px 0; border-y: 1px solid var(--gold); margin-bottom: 10px; }
+        .marquee-text { display: inline-block; white-space: nowrap; animation: marquee 25s linear infinite; color: var(--gold); font-weight: bold; font-size: 10px; }
+        @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(2, 6, 23, 0.98); border-top: 1px solid rgba(212,175,55,0.3); z-index: 100; padding: 12px 0; border-radius: 25px 25px 0 0; }
+        .tab-content { display: none; padding-bottom: 110px; animation: slideUp 0.4s ease; }
+        .tab-content.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #loadingOverlay { position: fixed; inset: 0; background: #020617; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .ring { width: 45px; height: 45px; border: 3px solid rgba(212,175,55,0.1); border-top: 3px solid var(--gold); border-radius: 50%; animation: rotate 1s linear infinite; }
         @keyframes rotate { 100% { transform: rotate(360deg); } }
-
-        .timer-circle { position: relative; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; }
-        .spin-ring { position: absolute; inset: 0; border: 3px solid rgba(255,255,255,0.05); border-top-color: var(--p-gold); border-radius: 50%; animation: spin 4s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        .tab-content { display: none; padding-bottom: 90px; }
-        .tab-content.active { display: block; animation: slideUp 0.4s ease-out; }
-        @keyframes slideUp { from {opacity: 0; transform: translateY(15px);} to {opacity: 1; transform: translateY(0);} }
-
-        .nav-btn.active { color: var(--p-gold); transform: scale(1.1); }
-        .btn-gold { background: linear-gradient(90deg, #fbbf24, #d97706); color: #000; font-weight: 800; }
-        .btn-red { background: linear-gradient(90deg, #ef4444, #991b1b); color: #fff; font-weight: 800; }
         
-        #banScreen { position: fixed; inset: 0; background: #450a0a; z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
-        input, select { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: #fff !important; }
-
-        @keyframes marquee { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-        .animate-marquee { display: inline-block; animation: marquee 35s linear infinite; }
+        select, input { background: rgba(255,255,255,0.05) !important; color: white !important; border: 1px solid rgba(212,175,55,0.2) !important; }
     </style>
 </head>
 <body>
 
-    <div id="banScreen">
-        <span class="text-7xl mb-4">⚠️</span>
-        <h1 class="text-3xl font-black mb-2 text-red-500">تم حظر الوصول</h1>
-        <p id="banReason" class="text-sm opacity-80 max-w-xs">تم اكتشاف نشاط مشبوه (VPN/ناسخ/تلاعب وقت). الحساب معلق لأسباب أمنية.</p>
-    </div>
+<div id="loadingOverlay">
+    <div class="ring"></div>
+    <h2 class="text-gold mt-4 font-black tracking-widest text-[10px]">MAKASIB ULTIMATE</h2>
+</div>
 
-    <div id="authPage" class="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-[#0a0f1e]">
-        <div class="glass-card p-6 w-full max-w-sm shadow-2xl">
-            <div id="loginBox" class="space-y-4">
-                <div class="text-center"><h1 class="text-4xl font-black text-yellow-500 tracking-tighter">مكاسب</h1><p class="text-gray-500 text-[10px]">نظام استثمار آمن 100%</p></div>
-                <input type="text" id="lId" placeholder="البريد أو الهاتف" class="w-full p-3 rounded-xl outline-none text-sm">
-                <input type="password" id="lPass" placeholder="كلمة المرور" class="w-full p-3 rounded-xl outline-none text-sm">
-                <button onclick="login()" class="w-full btn-gold p-3 rounded-xl shadow-lg text-sm">تسجيل الدخول</button>
-                <p class="text-center text-xs" onclick="toggleAuth(true)">جديد؟ <span class="text-yellow-500 font-bold cursor-pointer">أنشئ حسابك</span></p>
-            </div>
-            <div id="regBox" class="hidden space-y-3">
-                <h2 class="text-lg font-black text-center text-yellow-500">عضوية جديدة</h2>
-                <div class="flex flex-col items-center" onclick="document.getElementById('rImg').click()">
-                    <div class="w-16 h-16 rounded-full border border-dashed border-yellow-500/50 overflow-hidden bg-white/5 flex items-center justify-center cursor-pointer">
-                        <img id="rPrev" class="hidden w-full h-full object-cover">
-                        <span id="rPlc" class="text-[8px] text-gray-400">الصورة</span>
-                    </div>
-                    <input type="file" id="rImg" class="hidden" onchange="hFile(this,'rPrev','rPlc')">
+<div id="authScreen" class="hidden fixed inset-0 z-[1000] bg-[#020617] flex items-center justify-center p-6 text-center">
+    <div class="glass p-8 w-full max-w-sm">
+        <div id="loginForm" class="space-y-4">
+            <h1 class="text-4xl font-black text-gold mb-6">مكاسب</h1>
+            <input type="text" id="logUser" placeholder="البريد أو الهاتف" class="w-full p-4 rounded-xl outline-none">
+            <input type="password" id="logPass" placeholder="كلمة المرور" class="w-full p-4 rounded-xl outline-none">
+            <button onclick="login()" class="w-full btn-gold p-4 rounded-xl shadow-xl">دخول</button>
+            <p class="text-[10px] text-gray-400">ليس لديك حساب؟ <span onclick="toggleAuth(true)" class="text-gold font-bold cursor-pointer">إنشاء حساب</span></p>
+        </div>
+        <div id="registerForm" class="hidden space-y-3">
+            <h2 class="text-gold font-bold mb-2">تسجيل جديد</h2>
+            <input type="text" id="regName" placeholder="الاسم الكامل" class="w-full p-3 rounded-xl outline-none">
+            <input type="email" id="regEmail" placeholder="البريد الإلكتروني" class="w-full p-3 rounded-xl outline-none">
+            <input type="tel" id="regPhone" placeholder="رقم الهاتف" class="w-full p-3 rounded-xl outline-none">
+            <input type="password" id="regPass" placeholder="كلمة المرور" class="w-full p-3 rounded-xl outline-none">
+            <input type="text" id="regRef" placeholder="كود الإحالة (اختياري)" class="w-full p-3 rounded-xl outline-none">
+            <div class="flex flex-col items-center gap-2">
+                <input type="file" id="regImg" class="hidden" onchange="previewImg(this, 'regPreview')">
+                <div onclick="document.getElementById('regImg').click()" class="w-16 h-16 rounded-full border-2 border-dashed border-gold/30 flex items-center justify-center cursor-pointer overflow-hidden">
+                    <img id="regPreview" class="hidden w-full h-full object-cover">
+                    <span id="regPlaceholder" class="text-[8px] text-gold">الصورة</span>
                 </div>
-                <input type="text" id="rName" placeholder="الاسم الكامل" class="w-full p-2.5 rounded-lg text-xs">
-                <input type="email" id="rEmail" placeholder="البريد الإلكتروني" class="w-full p-2.5 rounded-lg text-xs">
-                <input type="tel" id="rPhone" placeholder="رقم الهاتف" class="w-full p-2.5 rounded-lg text-xs">
-                <input type="password" id="rPass" placeholder="كلمة المرور" class="w-full p-2.5 rounded-lg text-xs">
-                <input type="text" id="rRef" placeholder="كود الإحالة" class="w-full p-2.5 rounded-lg text-xs">
-                <button onclick="register()" class="w-full btn-gold p-3 rounded-xl text-sm">إنشاء حساب</button>
-                <p class="text-center text-xs" onclick="toggleAuth(false)">لديك حساب؟ <span class="text-yellow-500 font-bold cursor-pointer">دخول</span></p>
             </div>
+            <button onclick="register()" class="w-full btn-gold p-4 rounded-xl">تأكيد الحساب</button>
+            <p onclick="toggleAuth(false)" class="text-[10px] cursor-pointer">رجوع للدخول</p>
         </div>
     </div>
+</div>
 
-    <div id="mainApp" class="hidden">
-        <header class="p-3 flex justify-between items-center sticky top-0 z-50 nav-glass">
-            <div class="flex items-center gap-2">
-                <img id="uAvatar" src="" class="w-10 h-10 rounded-full border border-yellow-500/50 object-cover">
-                <h2 id="uTopName" class="font-bold text-xs truncate w-20">...</h2>
-            </div>
-            <div class="flex items-center gap-3">
-                <div class="relative" onclick="openNotifs()">
-                    <span class="text-xl">🔔</span>
-                    <span id="notifDot" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
-                </div>
-                <div class="bg-yellow-500/10 px-3 py-1 rounded-xl border border-yellow-500/20">
-                    <p id="uBal" class="text-sm font-black text-yellow-500">$0.00</p>
-                </div>
-            </div>
-        </header>
-
-        <div class="w-full bg-black/40 overflow-hidden py-1 border-y border-white/5">
-            <div class="whitespace-nowrap inline-block animate-marquee text-[10px] font-bold text-yellow-500">
-                🚀 تطبيق مكاسب: استثمر بذكاء مع أرباح يومية تراكمية.. نظام إحالة مميز يمنحك 5$ لكل مشترك مفعل.. سحب فوري عبر زين كاش، ماستر كارد، وUSDT.. الأمان والسرعة شعارنا.      🚀 نظام حماية متطور ضد التلاعب والـ VPN.. سجل الآن وابدأ رحلة أرباحك مع مكاسب.
+<div id="mainContent" class="hidden">
+    <header class="p-4 flex justify-between items-center sticky top-0 z-50 bg-[#020617]/90 backdrop-blur-md border-b border-gold/10">
+        <div class="flex items-center gap-3">
+            <img id="uImgHead" class="w-11 h-11 rounded-full border-2 border-gold object-cover shadow-lg">
+            <div>
+                <p id="uNameHead" class="font-black text-[10px] text-white">...</p>
+                <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span><span class="text-[7px] text-gray-400">عضو نشط</span></div>
             </div>
         </div>
+        <div class="flex items-center gap-3">
+            <div class="relative cursor-pointer" onclick="showTab('notificationsTab')">
+                <span class="text-2xl">🔔</span>
+                <div id="notifDot" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full border-2 border-[#020617]"></div>
+            </div>
+            <div class="bg-gold/10 border border-gold/30 px-4 py-1.5 rounded-full"><span id="uBalHead" class="text-gold font-black text-xs">$0.00</span></div>
+        </div>
+    </header>
 
-        <main class="p-3">
-            <div id="home" class="tab-content active space-y-4">
-                <div class="info-card rounded-2xl p-4 flex items-center justify-between shadow-xl">
-                    <div class="flex items-center gap-3 z-10">
-                        <div class="relative">
-                            <img id="uAvatarMain" src="" class="w-14 h-14 rounded-full border-2 border-yellow-500 p-0.5 object-cover">
-                            <span class="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-[#0f172a]"></span>
-                        </div>
-                        <div>
-                            <p id="uNameMain" class="font-black text-sm">...</p>
-                            <p class="text-[9px] text-gray-400">عضو مميز VIP</p>
-                            <div onclick="copyText(user.myRefCode)" class="mt-1 bg-black/30 px-2 py-0.5 rounded flex items-center gap-1 cursor-pointer active:scale-95">
-                                <span class="text-[9px] text-yellow-500">ID: <span id="uIdMain">...</span></span>
-                                <span>📋</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-left z-10">
-                        <p class="text-[8px] text-gray-400 uppercase tracking-widest">المحفظة</p>
-                        <p class="text-lg font-black text-white">$<span id="uBalMain">0.00</span></p>
-                    </div>
+    <div class="marquee"><div class="marquee-text">🚀 مكاسب بريميوم: استثمر الآن بآمان وسرعة فائقة .. استمتع بباقات تصل إلى 2000$ وأرباح يومية مضمونة .. نظام إحالة متطور وعمولات فورية 🚀</div></div>
+
+    <main class="p-2">
+        <div id="home" class="tab-content active space-y-4">
+            <div id="sliderContainer"></div>
+            <div class="glass p-5 flex justify-between items-center mx-2 shadow-2xl bg-gradient-to-l from-blue-900/20 to-transparent">
+                <div>
+                    <p class="text-[8px] text-gray-400">الرصيد الكلي</p>
+                    <h2 class="text-3xl font-black text-white">$<span id="uBalMain">0.00</span></h2>
                 </div>
-
-                <div id="slider"></div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="glass-card p-3 text-center">
-                        <p class="text-[9px] text-gray-400">أرباح اليوم المتوقعة</p>
-                        <h3 id="dEarn" class="text-lg font-black text-green-400">$0.00</h3>
-                    </div>
-                    <div class="glass-card p-3 text-center">
-                        <p class="text-[9px] text-gray-400">إجمالي الأرباح</p>
-                        <h3 id="tEarn" class="text-lg font-black text-yellow-500">$0.00</h3>
-                    </div>
-                </div>
-
-                <div class="flex flex-col items-center p-4 glass-card">
-                    <div class="timer-circle">
-                        <div class="spin-ring"></div>
-                        <div class="text-center z-10"><span id="timerText" class="text-xl font-black">00:00:00</span><p class="text-[7px] text-yellow-500 font-bold uppercase">توزيع الأرباح</p></div>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <h3 class="text-[10px] font-bold text-gray-400 px-1">باقاتك النشطة حالياً:</h3>
-                    <div id="activePlansHome" class="grid grid-cols-2 gap-2"></div>
+                <div class="text-right">
+                    <p id="timer" class="text-gold font-bold text-xs">--:--:--</p>
+                    <p class="text-[6px] opacity-40">توزيع الأرباح</p>
                 </div>
             </div>
-
-            <div id="invest" class="tab-content space-y-3">
-                <h3 class="text-sm font-black border-r-2 border-yellow-500 pr-2">خطط الاستثمار المتاحة</h3>
-                <div id="investList" class="grid gap-2"></div>
-            </div>
-
-            <div id="wallet" class="tab-content space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="openW('deposit')" class="btn-gold p-4 rounded-2xl text-xs">📥 إيداع</button>
-                    <button onclick="openW('withdraw')" class="btn-red p-4 rounded-2xl text-xs">📤 سحب</button>
+            <div class="grid grid-cols-2 gap-3 mx-2">
+                <div class="glass p-3 text-center">
+                    <p class="text-[8px] opacity-60">ربحك اليومي</p>
+                    <p id="dailyE" class="text-gold font-black text-sm">$0.00</p>
                 </div>
-                <div class="glass-card p-4"><p class="text-[10px] text-gray-400 mb-3 text-center">سجل العمليات</p><div id="transList" class="space-y-2"></div></div>
-            </div>
-
-            <div id="agents" class="tab-content space-y-4">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-sm font-black border-r-2 border-yellow-500 pr-2">وكلاء مكاسب المعتمدين</h3>
-                    <button id="addAgentBtn" onclick="openAgentModal()" class="hidden bg-green-500 text-white w-8 h-8 rounded-full font-bold text-xl flex items-center justify-center">+</button>
+                <div class="glass p-3 text-center cursor-pointer" onclick="showSubsDetails()">
+                    <p class="text-[8px] opacity-60">الاشتراكات النشطة</p>
+                    <p id="subCount" class="text-green-500 font-black text-sm">0</p>
                 </div>
-                <div id="agentsList" class="grid gap-3"></div>
             </div>
+            <h3 class="text-[10px] font-bold text-gold px-3">💎 باقاتك النشطة</h3>
+            <div id="activePlansGrid" class="grid grid-cols-2 gap-3 px-2"></div>
+        </div>
 
-            <div id="team" class="tab-content space-y-4">
-                <div class="info-card p-4 rounded-2xl text-center">
-                    <p class="text-[10px] text-gray-400">إجمالي مكافآت الإحالة</p>
-                    <h2 id="teamBonus" class="text-3xl font-black text-yellow-500">$0.00</h2>
-                    <p class="text-[8px] mt-1 opacity-50">($5 لأول 10 أعضاء - $1 لكل إحالة بعدها)</p>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="glass-card p-3 text-center"><p class="text-[8px] text-gray-400">نشط</p><h4 id="tAct" class="text-sm font-bold text-green-400">0</h4></div>
-                    <div class="glass-card p-3 text-center"><p class="text-[8px] text-gray-400">غير نشط</p><h4 id="tIna" class="text-sm font-bold text-gray-500">0</h4></div>
-                </div>
-                <div id="teamList" class="space-y-1.5"></div>
+        <div id="invest" class="tab-content space-y-3 px-2">
+            <h2 class="text-sm font-black text-gold">مركز الاستثمار</h2>
+            <div id="marketList" class="grid gap-3"></div>
+        </div>
+
+        <div id="wallet" class="tab-content space-y-4 px-2">
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="openFinModal('deposit')" class="btn-gold p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-gold/10"><span class="text-lg">📥</span><span>إيداع</span></button>
+                <button onclick="openFinModal('withdraw')" class="glass p-4 rounded-2xl border-white/20 flex flex-col items-center gap-1"><span class="text-lg">📤</span><span>سحب</span></button>
             </div>
-
-            <div id="profile" class="tab-content space-y-4">
-                <div class="glass-card p-5 text-center relative">
-                    <div class="relative inline-block">
-                        <img id="pAvatar" src="" class="w-20 h-20 rounded-full border-2 border-yellow-500 mx-auto object-cover shadow-2xl">
-                        <label for="pUp" class="absolute bottom-0 right-0 bg-yellow-500 p-1.5 rounded-full cursor-pointer text-[10px] shadow-lg">📸</label>
-                        <input type="file" id="pUp" class="hidden" onchange="hFile(this,'pAvatar')">
-                    </div>
-                    <div class="mt-4 space-y-2 text-right">
-                        <input type="text" id="pNewName" class="w-full bg-white/5 p-2 rounded-lg text-xs font-bold text-center border border-white/10">
-                        <div class="bg-black/20 p-2 rounded-lg flex justify-between text-[10px]"><span class="text-gray-400">البريد:</span><span id="pEmail"></span></div>
-                        <div class="bg-black/20 p-2 rounded-lg flex justify-between text-[10px]"><span class="text-gray-400">الهاتف:</span><span id="pPhone"></span></div>
-                        <div onclick="copyText(user.myRefCode)" class="bg-yellow-500/10 p-2 rounded-lg flex justify-between border-r-2 border-yellow-500 text-[10px] cursor-pointer"><span class="text-yellow-500 font-bold">كود الإحالة (اضغط للنسخ):</span><span id="pRefCode" class="font-black"></span></div>
-                    </div>
-
-                    <div class="mt-4 text-right">
-                        <p class="text-[10px] text-yellow-500 font-bold mb-2">إشتراكاتك الحالية:</p>
-                        <div id="activePlansProfile" class="space-y-1"></div>
-                    </div>
-
-                    <button onclick="saveP()" class="mt-4 w-full btn-gold py-2.5 rounded-xl text-xs">تحديث البيانات</button>
-                </div>
-                <button onclick="logout()" class="w-full p-3 bg-red-500/10 text-red-500 font-bold rounded-xl border border-red-500/20 text-xs">تسجيل الخروج</button>
-            </div>
-        </main>
-
-        <div id="modal" class="fixed inset-0 bg-black/95 hidden z-[300] flex items-center justify-center p-4">
-            <div id="modalBody" class="glass-card p-6 w-full max-w-sm max-h-[85vh] overflow-y-auto relative">
-                <button onclick="closeM()" class="absolute top-4 left-4 text-xl">✕</button>
-                <div id="modalContent" class="mt-4"></div>
+            <div class="glass p-4">
+                <h3 class="text-[10px] font-bold mb-3 text-gold">سجل المعاملات المالية</h3>
+                <div id="historyList" class="space-y-3"></div>
             </div>
         </div>
 
-        <nav class="fixed bottom-0 inset-x-0 p-2 nav-glass flex justify-around items-center z-50 rounded-t-[1.5rem]">
-            <button onclick="showTab('home')" class="nav-btn active flex flex-col items-center"><span class="text-xl">🏠</span><span class="text-[8px] font-bold">الرئيسية</span></button>
-            <button onclick="showTab('agents')" class="nav-btn flex flex-col items-center"><span class="text-xl">🤝</span><span class="text-[8px] font-bold">الوكلاء</span></button>
-            <button onclick="showTab('invest')" class="nav-btn flex flex-col items-center"><span class="text-xl">💎</span><span class="text-[8px] font-bold">استثمار</span></button>
-            <button onclick="showTab('wallet')" class="nav-btn flex flex-col items-center"><span class="text-xl">💳</span><span class="text-[8px] font-bold">محفظة</span></button>
-            <button onclick="showTab('team')" class="nav-btn flex flex-col items-center"><span class="text-xl">👥</span><span class="text-[8px] font-bold">فريق</span></button>
-            <button onclick="showTab('profile')" class="nav-btn flex flex-col items-center"><span class="text-xl">👤</span><span class="text-[8px] font-bold">حسابي</span></button>
-        </nav>
+        <div id="agents" class="tab-content space-y-3 px-2">
+            <div class="flex justify-between items-center"><h2 class="text-sm font-black text-gold">وكلاء الشحن</h2><button id="addAgBtn" onclick="openAgForm()" class="hidden bg-gold text-black w-8 h-8 rounded-full font-bold shadow-lg">+</button></div>
+            <div id="agentsGrid" class="grid gap-3"></div>
+        </div>
+
+        <div id="team" class="tab-content space-y-4 px-2">
+            <div class="glass p-5 text-center bg-gradient-to-b from-gold/5 to-transparent">
+                <p class="text-[9px] opacity-60 mb-1">مكافآت الإحالة</p>
+                <h2 id="teamBon" class="text-3xl font-black text-gold">$0.00</h2>
+            </div>
+            <h3 class="text-[10px] font-bold text-gold px-1">أعضاء فريقك</h3>
+            <div id="teamGrid" class="space-y-2"></div>
+        </div>
+
+        <div id="profile" class="tab-content space-y-4 px-2">
+            <div class="glass p-6 text-center">
+                <img id="profImg" class="w-24 h-24 mx-auto rounded-full border-4 border-gold object-cover shadow-2xl mb-4">
+                <h2 id="profNameDisplay" class="font-black text-white text-lg">...</h2>
+                <div class="mt-3 bg-black/40 p-3 rounded-xl flex justify-between text-[8px] border border-white/5">
+                    <span class="opacity-50">رابط الإحالة:</span><span id="profCode" class="text-gold font-bold"></span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mt-4">
+                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[7px] opacity-50">إجمالي الأرباح</p><p id="pTotalProf" class="text-green-500 font-bold">$0.00</p></div>
+                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[7px] opacity-50">باقات نشطة</p><p id="pSubCount" class="text-blue-500 font-bold">0</p></div>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full p-4 bg-red-600/10 text-red-500 rounded-xl text-[10px] font-black border border-red-600/20">تسجيل الخروج</button>
+        </div>
+
+        <div id="notificationsTab" class="tab-content space-y-4 px-2">
+            <h2 class="text-sm font-black text-gold">سجل التنبيهات</h2>
+            <div id="notifsList" class="space-y-3"></div>
+        </div>
+    </main>
+
+    <nav class="nav-bar flex justify-around">
+        <button onclick="showTab('home')" class="nav-it active flex flex-col items-center gap-1"><span class="text-xl">🏠</span><span class="text-[7px]">الرئيسية</span></button>
+        <button onclick="showTab('invest')" class="nav-it flex flex-col items-center gap-1 opacity-40"><span class="text-xl">💎</span><span class="text-[7px]">الباقات</span></button>
+        <button onclick="showTab('wallet')" class="nav-it flex flex-col items-center gap-1 opacity-40"><span class="text-xl">💳</span><span class="text-[7px]">محفظتي</span></button>
+        <button onclick="showTab('agents')" class="nav-it flex flex-col items-center gap-1 opacity-40"><span class="text-xl">🤝</span><span class="text-[7px]">الوكلاء</span></button>
+        <button onclick="showTab('team')" class="nav-it flex flex-col items-center gap-1 opacity-40"><span class="text-xl">👥</span><span class="text-[7px]">الفريق</span></button>
+        <button onclick="showTab('profile')" class="nav-it flex flex-col items-center gap-1 opacity-40"><span class="text-xl">👤</span><span class="text-[7px]">حسابي</span></button>
+    </nav>
+</div>
+
+<div id="modal" class="fixed inset-0 bg-black/95 hidden z-[2000] p-6 flex items-center justify-center">
+    <div class="glass p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto relative border-gold/30">
+        <button onclick="closeModal()" class="absolute top-3 left-3 text-gold text-3xl">×</button>
+        <div id="modalContent" class="mt-4"></div>
     </div>
+</div>
 
-    <script>
-        const firebaseConfig = { apiKey: "AIzaSyAjn2WNPRb_edcRIx8U7WRKsH5-wUYS7lA", databaseURL: "https://kaajjoo-9e88a-default-rtdb.firebaseio.com" };
-        firebase.initializeApp(firebaseConfig);
-        const rdb = firebase.database();
+<script>
+    const firebaseConfig = { apiKey: "AIzaSyAjn2WNPRb_edcRIx8U7WRKsH5-wUYS7lA", databaseURL: "https://kaajjoo-9e88a-default-rtdb.firebaseio.com" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-        let myKey = localStorage.getItem('makasib_key'), user = null, tempFile = "";
-        const adminEmail = "Saged5520y@gmail.com";
+    let uKey = localStorage.getItem('mk_user_key'), uData = null, fileData = "";
+    const adminMail = "Saged5520y@gmail.com";
+    const appUsdtWallet = "TNc5yGf6...YOUR_USDT_WALLET_HERE"; // ضع محفظتك هنا
 
-        // --- الحماية المتقدمة وتدقيق الوقت ---
-        function securityCheck() {
-            const now = Date.now();
-            const lastCheck = parseInt(localStorage.getItem('last_time_check') || now);
-            
-            // إذا كان وقت الجهاز الحالي أصغر من آخر وقت مسجل (تلاعب بالوقت للوراء)
-            if (now < lastCheck - 60000) { 
-                doBan("تم اكتشاف تلاعب بالوقت (العودة للماضي)");
-            }
-            localStorage.setItem('last_time_check', now);
-
-            if (window.navigator.webdriver || !window.navigator.languages) doBan("Cloner/Automation Detected");
-            
-            if(myKey) {
-                rdb.ref('users/'+myKey+'/isBanned').on('value', snap => { 
-                    if(snap.val() === true) doBan("تم حظر حسابك من قبل الإدارة"); 
-                });
-            }
+    async function init() {
+        if(!uKey) {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            document.getElementById('authScreen').classList.remove('hidden');
+            return;
         }
+        db.ref('users/'+uKey).on('value', async snap => {
+            uData = snap.val();
+            if(!uData) return logout();
+            await checkProfitsSecurity();
+            renderUI();
+            document.getElementById('loadingOverlay').style.display = 'none';
+            document.getElementById('mainContent').classList.remove('hidden');
+        });
+    }
+
+    async function checkProfitsSecurity() {
+        db.ref(".info/serverTimeOffset").once("value", async offsetSnap => {
+            const now = Date.now() + (offsetSnap.val() || 0);
+            const last = uData.lastProfitTime || now;
+            if (now - last >= 86400000) {
+                let daily = 0;
+                if(uData.activePlansDetails) uData.activePlansDetails.forEach(p => daily += p.amount * 0.02);
+                if(daily > 0) {
+                    await db.ref('users/'+uKey).update({ balance: (uData.balance || 0) + daily, totalProfits: (uData.totalProfits || 0) + daily, lastProfitTime: now });
+                    addNotif("💰 توزيع أرباح", `تمت إضافة أرباح اليوم $${daily.toFixed(2)}.`);
+                } else { await db.ref('users/'+uKey).update({ lastProfitTime: now }); }
+            }
+        });
+    }
+
+    function renderUI() {
+        document.getElementById('uNameHead').innerText = uData.username;
+        document.getElementById('profNameDisplay').innerText = uData.username;
+        document.getElementById('uImgHead').src = uData.img;
+        document.getElementById('profImg').src = uData.img;
+        document.getElementById('uBalHead').innerText = `$${(uData.balance || 0).toFixed(2)}`;
+        document.getElementById('uBalMain').innerText = (uData.balance || 0).toFixed(2);
+        document.getElementById('profCode').innerText = uData.myRefCode;
+        document.getElementById('pTotalProf').innerText = `$${(uData.totalProfits || 0).toFixed(2)}`;
         
-        async function doBan(r) { 
-            document.getElementById('banReason').innerText = r;
-            document.getElementById('banScreen').style.display = 'flex'; 
-            if(myKey) await rdb.ref('users/'+myKey).update({isBanned: true, banReason: r});
-            throw new Error(r); 
+        const plans = uData.activePlansDetails || [];
+        document.getElementById('subCount').innerText = plans.length;
+        document.getElementById('pSubCount').innerText = plans.length;
+        
+        let dE = 0; plans.forEach(p => dE += p.amount * 0.02);
+        document.getElementById('dailyE').innerText = `$${dE.toFixed(2)}`;
+
+        renderSlider();
+        renderMarket();
+        renderActivePlans();
+        renderHistory();
+        renderAgents();
+        renderTeam();
+        renderNotifs();
+    }
+
+    function renderSlider() {
+        const imgs = ["https://i.ibb.co/5gWjTtH1/IMG-20260317-161222-576.jpg", "https://i.ibb.co/67xjtzhf/1773729649466.png", "https://i.ibb.co/Jh1GCqB/1773729540326.png"];
+        const container = document.getElementById('sliderContainer');
+        if(container.innerHTML === "") {
+            container.innerHTML = imgs.map((src, i) => `<div class="slide ${i===0?'active':''}" style="background-image:url('${src}')"></div>`).join('');
+            let current = 0;
+            setInterval(() => {
+                const slides = document.querySelectorAll('.slide');
+                if(slides.length > 0) {
+                    slides[current].classList.remove('active');
+                    current = (current + 1) % slides.length;
+                    slides[current].classList.add('active');
+                }
+            }, 5000);
         }
+    }
 
-        // --- توزيع الأرباح كل 24 ساعة ---
-        function handleDailyProfit() {
-            if (!user || !user.activePlans || user.activePlans.length === 0) return;
-            
-            const lastProfitTime = user.lastProfitTime || 0;
-            const now = Date.now();
-            const oneDay = 24 * 60 * 60 * 1000;
+    function renderMarket() {
+        const prices = [25, 50, 100, 250, 500, 1000, 1500, 2000];
+        document.getElementById('marketList').innerHTML = prices.map(p => `
+            <div class="glass p-4 flex justify-between items-center border-r-4 border-gold active:scale-95 transition">
+                <div><p class="font-black text-[11px]">باقة استثمار $${p}</p><p class="text-[8px] text-green-500">العائد: $${(p*0.02).toFixed(2)} يومياً</p></div>
+                <button onclick="buyP(${p})" class="btn-gold px-5 py-2 rounded-xl text-[9px]">تفعيل</button>
+            </div>`).join('');
+    }
 
-            if (now - lastProfitTime >= oneDay) {
-                let dailyTotal = 0;
-                user.activePlans.forEach(amt => { dailyTotal += (amt * 0.02); });
-                
-                const newBalance = (user.balance || 0) + dailyTotal;
-                const newTotalProfit = (user.totalProfit || 0) + dailyTotal;
-
-                rdb.ref('users/'+myKey).update({
-                    balance: newBalance,
-                    totalProfit: newTotalProfit,
-                    lastProfitTime: now
-                });
-
-                rdb.ref('notifications/'+myKey).push({
-                    text: `💰 تم إضافة أرباحك اليومية بقيمة $${dailyTotal.toFixed(2)}`,
-                    time: new Date().toLocaleString('ar-EG'),
-                    read: false
-                });
-            }
+    async function buyP(amt) {
+        if(uData.balance < amt) return alert("الرصيد غير كافٍ");
+        if(confirm(`تأكيد تفعيل باقة $${amt}؟`)) {
+            let list = uData.activePlansDetails || [];
+            list.push({ amount: amt, date: new Date().toLocaleString('ar-EG'), ts: Date.now() });
+            await db.ref('users/'+uKey).update({ balance: uData.balance - amt, activePlansDetails: list });
+            addNotif("💎 باقة جديدة", `تم تفعيل باقة $${amt}.`);
+            alert("تم التفعيل!");
         }
+    }
 
-        function copyText(txt) { navigator.clipboard.writeText(txt).then(() => alert("تم النسخ: " + txt)); }
+    function renderActivePlans() {
+        const list = uData.activePlansDetails || [];
+        document.getElementById('activePlansGrid').innerHTML = list.map(p => `
+            <div class="glass p-3 text-center border-b-2 border-gold/20">
+                <p class="text-gold font-black text-[10px]">$${p.amount}</p>
+                <p class="text-[7px] text-green-500">نشطة ✅</p>
+            </div>`).join('') || `<p class="col-span-2 text-center py-5 opacity-20 text-[8px]">لا يوجد باقات</p>`;
+    }
 
-        function hFile(inp, pId, lId) {
-            if (inp.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    tempFile = e.target.result;
-                    document.getElementById(pId).src = e.target.result;
-                    document.getElementById(pId).classList.remove('hidden');
-                    if(lId) document.getElementById(lId).classList.add('hidden');
-                };
-                reader.readAsDataURL(inp.files[0]);
-            }
+    function showSubsDetails() {
+        const list = uData.activePlansDetails || [];
+        let h = `<h2 class="text-gold font-black text-center mb-5">تفاصيل الاشتراكات</h2><div class="space-y-3">`;
+        list.forEach(p => {
+            h += `<div class="p-3 bg-white/5 rounded-xl border-r-2 border-gold text-[9px]">
+                <div class="flex justify-between mb-1"><span>القيمة:</span><span class="text-gold">$${p.amount}</span></div>
+                <div class="flex justify-between mb-1"><span>التاريخ:</span><span>${p.date}</span></div>
+                <div class="flex justify-between"><span>الربح اليومي:</span><span class="text-green-500">+$${(p.amount*0.02).toFixed(2)}</span></div>
+            </div>`;
+        });
+        document.getElementById('modalContent').innerHTML = (list.length ? h : `<p class="text-center py-10 opacity-30">لا توجد باقات</p>`) + `</div>`;
+        document.getElementById('modal').classList.remove('hidden');
+    }
+
+    // --- نظام المحفظة والعمليات المطور ---
+    function openFinModal(type) {
+        const isD = type === 'deposit';
+        let options = isD ? `
+            <option value="Asiacell">آسياسيل (كارت 16 رقم)</option>
+            <option value="USDT">USDT (TRC-20)</option>` : `
+            <option value="ZainCash">زين كاش</option>
+            <option value="MasterCard">ماستر كارد</option>
+            <option value="USDT">USDT (TRC-20)</option>
+            <option value="SuperKey">سوبركي</option>`;
+
+        document.getElementById('modalContent').innerHTML = `
+            <h2 class="text-gold font-black text-center mb-5">${isD?'إيداع رصيد':'طلب سحب'}</h2>
+            <div class="space-y-3">
+                <div class="p-3 glass text-[9px] mb-2">
+                    <p>المستخدم: <span class="text-gold">${uData.username}</span></p>
+                    <p>الهاتف: <span class="text-gold">${uData.phone}</span></p>
+                </div>
+                <select id="fMethod" onchange="toggleFields()" class="w-full p-4 rounded-xl outline-none text-[10px]">
+                    <option value="">اختر طريقة ${isD?'الإيداع':'السحب'}</option>
+                    ${options}
+                </select>
+                <div id="methodInfo" class="hidden p-3 bg-gold/10 rounded-xl border border-gold/20 text-[8px] text-center text-gold"></div>
+                <input type="number" id="fAmt" placeholder="المبلغ ($)" class="w-full p-4 rounded-xl outline-none text-[10px]">
+                <input type="text" id="fAcc" placeholder="رقم المحفظة / الماستر / الكارت" class="w-full p-4 rounded-xl outline-none text-[10px]">
+                <div id="extraFields"></div>
+                <div onclick="document.getElementById('fFile').click()" class="border-2 border-dashed border-white/10 p-4 text-center cursor-pointer rounded-xl">
+                    <input type="file" id="fFile" class="hidden" onchange="previewImg(this, 'fPrev')">
+                    <img id="fPrev" class="hidden w-20 mx-auto rounded mb-2">
+                    <p class="text-[8px] opacity-40">ارفق صورة ${isD?'الإيداع':'الباركود للمحفظة'}</p>
+                </div>
+                <button onclick="submitFinancial('${type}')" class="w-full btn-gold p-4 rounded-xl text-[10px]">تأكيد الطلب</button>
+            </div>`;
+        document.getElementById('modal').classList.remove('hidden');
+    }
+
+    function toggleFields() {
+        const m = document.getElementById('fMethod').value;
+        const info = document.getElementById('methodInfo');
+        info.classList.add('hidden');
+        if(m === 'USDT') {
+            info.innerHTML = `قم بالتحويل للمحفظة التالية:<br><b>${appUsdtWallet}</b>`;
+            info.classList.remove('hidden');
+        } else if(m === 'Asiacell') {
+            info.innerHTML = `يرجى كتابة 16 رقم كارت الشحن في خانة الرقم أدناه.`;
+            info.classList.remove('hidden');
         }
+    }
 
-        function openNotifs() {
-            const cont = document.getElementById('modalContent');
-            cont.innerHTML = `<h2 class="text-lg font-black text-yellow-500 mb-4">🔔 الإشعارات</h2><div id="nb" class="space-y-2 text-right"></div>`;
-            rdb.ref('notifications/'+myKey).limitToLast(10).once('value', snap => {
-                let h = ""; snap.forEach(c => {
-                    const n = c.val(); h = `<div class="p-3 bg-white/5 rounded-xl border-l-2 border-yellow-500"><p class="text-[10px] font-bold">${n.text}</p><p class="text-[8px] text-gray-500 mt-1">${n.time}</p></div>` + h;
-                    c.ref.update({read:true});
-                });
-                document.getElementById('nb').innerHTML = h || "<p class='text-center text-[10px] opacity-20 py-10'>لا يوجد جديد</p>";
-                document.getElementById('notifDot').classList.add('hidden');
-            });
-            document.getElementById('modal').classList.remove('hidden');
-        }
+    async function submitFinancial(type) {
+        const m = document.getElementById('fMethod').value;
+        const amt = document.getElementById('fAmt').value;
+        const acc = document.getElementById('fAcc').value;
+        if(!m || !amt || !acc || !fileData) return alert("أكمل كافة البيانات");
+        
+        const tid = 'TR' + Date.now();
+        await db.ref('transactions/' + tid).set({
+            id: tid, uid: uKey, uName: uData.username, uPhone: uData.phone, amount: parseFloat(amt), type: type, 
+            status: 'قيد المراجعة', method: m, account: acc, proof: fileData, 
+            time: new Date().toLocaleString('ar-EG'), ts: Date.now()
+        });
+        
+        addNotif("🏦 طلب مالي", `تم إرسال طلب ${type==='deposit'?'إيداع':'سحب'} بقيمة $${amt}.`);
+        alert("تم إرسال الطلب بنجاح"); closeModal();
+    }
 
-        // --- نظام الوكلاء ---
-        function openAgentModal(editKey = null) {
-            const cont = document.getElementById('modalContent');
-            let initial = { n: '', c: '', p: '', w: '', t: '', r: '', img: '' };
-            if(editKey) {
-                rdb.ref('agents/'+editKey).once('value', snap => {
-                    const a = snap.val();
-                    renderAgentForm(editKey, a);
-                });
-            } else {
-                renderAgentForm(null, initial);
-            }
-            document.getElementById('modal').classList.remove('hidden');
-        }
-
-        function renderAgentForm(key, a) {
-            document.getElementById('modalContent').innerHTML = `
-                <h2 class="text-lg font-black text-yellow-500 mb-4">${key?'تعديل وكيل':'إضافة وكيل جديد'}</h2>
-                <div class="space-y-2 text-right" dir="rtl">
-                    <div class="flex flex-col items-center mb-2" onclick="document.getElementById('agImgInp').click()">
-                        <img id="agPrev" src="${a.img || ''}" class="${a.img?'':'hidden'} w-20 h-20 rounded-xl object-cover border-2 border-yellow-500">
-                        <div id="agPlc" class="${a.img?'hidden':''} w-20 h-20 bg-white/10 rounded-xl flex items-center justify-center text-[10px]">صورة الوكيل</div>
-                        <input type="file" id="agImgInp" class="hidden" onchange="hFile(this,'agPrev','agPlc')">
+    function renderHistory() {
+        db.ref('transactions').orderByChild('uid').equalTo(uKey).on('value', snap => {
+            let h = ""; let list = []; snap.forEach(c => list.unshift(c.val()));
+            list.forEach(t => {
+                h += `
+                <div class="p-3 bg-white/5 rounded-xl border-r-2 ${t.status==='مرفوض'?'border-red-500':'border-gold'}" onclick="showTransDetails('${t.id}')">
+                    <div class="flex justify-between items-center">
+                        <div><p class="text-[10px] font-black">${t.type==='deposit'?'إيداع':'سحب'} ${t.method}</p><p class="text-[7px] opacity-40">$${t.amount} | ${t.time}</p></div>
+                        <span class="text-[8px] font-bold ${t.status==='مكتمل'?'text-green-500':'text-gold'}">${t.status}</span>
                     </div>
-                    <input type="text" id="agName" value="${a.n}" placeholder="اسم الوكيل" class="w-full p-2.5 rounded-xl text-xs">
-                    <input type="text" id="agCity" value="${a.c}" placeholder="المدينة" class="w-full p-2.5 rounded-xl text-xs">
-                    <input type="text" id="agProv" value="${a.p}" placeholder="المحافظة" class="w-full p-2.5 rounded-xl text-xs">
-                    <input type="text" id="agWat" value="${a.w}" placeholder="رقم واتساب (+964)" class="w-full p-2.5 rounded-xl text-xs">
-                    <input type="text" id="agTel" value="${a.t}" placeholder="معرف تليجرام" class="w-full p-2.5 rounded-xl text-xs">
-                    <input type="text" id="agRef" value="${a.r}" placeholder="رمز الإحالة" class="w-full p-2.5 rounded-xl text-xs">
-                    <button onclick="saveAgent('${key||''}')" class="w-full btn-gold p-3 rounded-xl text-xs mt-2">${key?'تحديث':'حفظ الوكيل'}</button>
                 </div>`;
-        }
+            });
+            document.getElementById('historyList').innerHTML = h || `<p class="text-center py-5 opacity-20">لا يوجد سجل</p>`;
+        });
+    }
 
-        async function saveAgent(key) {
-            const d = {
-                n: document.getElementById('agName').value,
-                c: document.getElementById('agCity').value,
-                p: document.getElementById('agProv').value,
-                w: document.getElementById('agWat').value,
-                t: document.getElementById('agTel').value,
-                r: document.getElementById('agRef').value,
-                img: document.getElementById('agPrev').src
+    async function showTransDetails(tid) {
+        const snap = await db.ref('transactions/'+tid).once('value');
+        const t = snap.val();
+        document.getElementById('modalContent').innerHTML = `
+            <h3 class="text-gold font-black mb-4">تفاصيل الطلب</h3>
+            <div class="space-y-2 text-[9px] glass p-4">
+                <p>النوع: ${t.type==='deposit'?'إيداع':'سحب'}</p>
+                <p>الوسيلة: ${t.method}</p>
+                <p>المبلغ: $${t.amount}</p>
+                <p>الحساب: ${t.account}</p>
+                <p>الحالة: ${t.status}</p>
+                <div class="mt-2 border-t border-white/5 pt-2">
+                    <p class="mb-1 opacity-50 text-[7px]">صورة الإثبات:</p>
+                    <img src="${t.proof}" class="w-full rounded-lg">
+                </div>
+            </div>`;
+        document.getElementById('modal').classList.remove('hidden');
+    }
+
+    // --- الوكلاء والفريق ---
+    function renderAgents() {
+        const isAdmin = uData.email === adminMail;
+        document.getElementById('addAgBtn').classList.toggle('hidden', !isAdmin);
+        db.ref('agents').on('value', snap => {
+            let h = "";
+            snap.forEach(c => {
+                const a = c.val();
+                h += `
+                <div class="glass p-3 flex gap-3 items-center border-r-2 border-gold">
+                    <img src="${a.img}" class="w-12 h-12 rounded-xl object-cover">
+                    <div class="flex-1">
+                        <h4 class="font-black text-[10px]">${a.n}</h4>
+                        <p class="text-[8px] text-gold">${a.c}</p>
+                        <div class="flex gap-2 mt-2">
+                            <a href="${a.w}" class="bg-green-600/20 text-green-500 px-3 py-1 rounded text-[7px]">واتساب</a>
+                            <a href="${a.t}" class="bg-blue-600/20 text-blue-500 px-3 py-1 rounded text-[7px]">تليجرام</a>
+                        </div>
+                    </div>
+                    ${isAdmin ? `<button onclick="delAg('${c.key}')" class="text-red-500 px-2">🗑️</button>` : ''}
+                </div>`;
+            });
+            document.getElementById('agentsGrid').innerHTML = h || `<p class="text-center py-5 opacity-20">لا يوجد وكلاء حالياً</p>`;
+        });
+    }
+
+    function openAgForm() {
+        document.getElementById('modalContent').innerHTML = `
+            <h2 class="text-gold font-black mb-4 text-center">إضافة وكيل</h2>
+            <div class="space-y-2">
+                <input type="text" id="an" placeholder="الاسم" class="w-full p-3 rounded-lg outline-none text-[10px]">
+                <input type="text" id="ac" placeholder="المدينة" class="w-full p-3 rounded-lg outline-none text-[10px]">
+                <input type="text" id="aw" placeholder="رابط واتساب" class="w-full p-3 rounded-lg outline-none text-[10px]">
+                <input type="text" id="at" placeholder="رابط تليجرام" class="w-full p-3 rounded-lg outline-none text-[10px]">
+                <input type="text" id="ai" placeholder="رابط الصورة" class="w-full p-3 rounded-lg outline-none text-[10px]">
+                <button onclick="saveAg()" class="w-full btn-gold p-3 rounded-xl text-[10px]">حفظ</button>
+            </div>`;
+        document.getElementById('modal').classList.remove('hidden');
+    }
+
+    async function saveAg() {
+        const d = { n: document.getElementById('an').value, c: document.getElementById('ac').value, w: document.getElementById('aw').value, t: document.getElementById('at').value, img: document.getElementById('ai').value };
+        await db.ref('agents').push(d); closeModal();
+    }
+    function delAg(k) { if(confirm("حذف؟")) db.ref('agents/'+k).remove(); }
+
+    function renderTeam() {
+        db.ref('users').once('value', snap => {
+            let h = "", profits = 0;
+            snap.forEach(c => {
+                const u = c.val();
+                if(u.referredBy === uData.myRefCode) {
+                    const active = (u.activePlansDetails && u.activePlansDetails.length > 0);
+                    if(active) profits += 5;
+                    h += `<div class="glass p-2 flex justify-between items-center text-[9px]">
+                        <div class="flex items-center gap-2"><img src="${u.img}" class="w-7 h-7 rounded-full object-cover"><p>${u.username}</p></div>
+                        <span class="${active?'text-green-500':'text-gray-500'} font-bold">${active?'نشط ✅':'خامل'}</span>
+                    </div>`;
+                }
+            });
+            document.getElementById('teamBon').innerText = `$${profits.toFixed(2)}`;
+            document.getElementById('teamGrid').innerHTML = h || `<p class="text-center py-5 opacity-20">لا يوجد أعضاء في فريقك</p>`;
+        });
+    }
+
+    // --- الإشعارات ووظائف عامة ---
+    async function addNotif(title, body) {
+        await db.ref('notifications').push({ uid: uKey, title, body, time: new Date().toLocaleTimeString('ar-EG'), read: false, ts: Date.now() });
+    }
+
+    function renderNotifs() {
+        db.ref('notifications').orderByChild('uid').equalTo(uKey).on('value', snap => {
+            let h = "", unread = false;
+            let list = []; snap.forEach(c => { if(!c.val().read) unread = true; list.unshift(c.val()); });
+            document.getElementById('notifDot').style.display = unread ? 'block' : 'none';
+            list.forEach(n => {
+                h += `<div class="glass p-3 border-l-2 ${n.read?'border-transparent':'border-gold'}">
+                    <p class="text-gold font-black text-[9px]">${n.title}</p>
+                    <p class="text-[8px] opacity-70">${n.body}</p>
+                    <p class="text-[6px] opacity-30 mt-1">${n.time}</p>
+                </div>`;
+            });
+            document.getElementById('notifsList').innerHTML = h || `<p class="text-center py-10 opacity-20">لا توجد تنبيهات</p>`;
+        });
+    }
+
+    function showTab(id) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.nav-it').forEach(b => {
+            if(b.getAttribute('onclick').includes(id)) b.style.opacity = "1";
+            else b.style.opacity = "0.4";
+        });
+        if(id === 'notificationsTab') {
+            db.ref('notifications').orderByChild('uid').equalTo(uKey).once('value', snap => {
+                snap.forEach(c => { if(!c.val().read) db.ref('notifications/'+c.key).update({read: true}); });
+            });
+        }
+    }
+
+    function startTimer() {
+        setInterval(() => {
+            if(!uData) return;
+            const now = Date.now(), last = uData.lastProfitTime || now;
+            const diff = Math.max(0, 86400000 - (now - last));
+            const h = Math.floor(diff / 3600000).toString().padStart(2,'0');
+            const m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0');
+            const s = Math.floor((diff%60000)/1000).toString().padStart(2,'0');
+            document.getElementById('timer').innerText = `${h}:${m}:${s}`;
+        }, 1000);
+    }
+
+    function previewImg(inp, id) {
+        if(inp.files[0]) {
+            const r = new FileReader();
+            r.onload = e => { 
+                fileData = e.target.result; 
+                const im = document.getElementById(id); im.src = e.target.result; im.classList.remove('hidden'); 
+                if(document.getElementById('regPlaceholder')) document.getElementById('regPlaceholder').classList.add('hidden');
             };
-            if(!d.n || !d.img) return alert("الاسم والصورة مطلوبين");
-            if(key) await rdb.ref('agents/'+key).update(d);
-            else await rdb.ref('agents').push(d);
-            closeM();
+            r.readAsDataURL(inp.files[0]);
         }
+    }
 
-        function deleteAgent(key) {
-            if(confirm("هل أنت متأكد من حذف هذا الوكيل؟")) rdb.ref('agents/'+key).remove();
-        }
+    async function login() {
+        const u = document.getElementById('logUser').value, p = document.getElementById('logPass').value;
+        if(!u || !p) return;
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        db.ref('users').once('value', snap => {
+            let key = null; snap.forEach(c => { if((c.val().email===u || c.val().phone===u) && c.val().password===p) key = c.key; });
+            if(key) { localStorage.setItem('mk_user_key', key); location.reload(); }
+            else { alert("خطأ!"); document.getElementById('loadingOverlay').style.display = 'none'; }
+        });
+    }
 
-        function loadAgents() {
-            const isAdmin = user && user.email === adminEmail;
-            document.getElementById('addAgentBtn').classList.toggle('hidden', !isAdmin);
-            rdb.ref('agents').on('value', snap => {
-                let h = "";
-                snap.forEach(c => {
-                    const a = c.val();
-                    h += `
-                    <div class="glass-card p-4 flex gap-4 items-center">
-                        <img src="${a.img}" class="w-16 h-16 rounded-2xl object-cover border border-yellow-500/30">
-                        <div class="flex-1">
-                            <h4 class="font-black text-sm text-yellow-500">${a.n}</h4>
-                            <p class="text-[10px] opacity-70">${a.p} - ${a.c}</p>
-                            <div class="flex gap-2 mt-2">
-                                <a href="https://wa.me/${a.w}" class="bg-green-600/20 text-green-500 p-1.5 rounded-lg text-[10px]">واتساب</a>
-                                <a href="https://t.me/${a.t.replace('@','')}" class="bg-blue-600/20 text-blue-400 p-1.5 rounded-lg text-[10px]">تليجرام</a>
-                            </div>
-                            <p class="text-[9px] mt-2 font-mono text-yellow-500/50">كود: ${a.r}</p>
-                        </div>
-                        ${isAdmin ? `
-                        <div class="flex flex-col gap-1">
-                            <button onclick="openAgentModal('${c.key}')" class="bg-yellow-500 text-black p-1.5 rounded-lg text-[10px] font-bold">تعديل</button>
-                            <button onclick="deleteAgent('${c.key}')" class="bg-red-500 text-white p-1.5 rounded-lg text-[10px] font-bold">حذف</button>
-                        </div>` : ''}
-                    </div>`;
-                });
-                document.getElementById('agentsList').innerHTML = h || "<p class='text-center py-10 opacity-30 text-xs'>لا يوجد وكلاء حالياً</p>";
-            });
-        }
+    async function register() {
+        const n = document.getElementById('regName').value, e = document.getElementById('regEmail').value, ph = document.getElementById('regPhone').value, ps = document.getElementById('regPass').value, ref = document.getElementById('regRef').value;
+        if(!n || !e || !ph || !ps || !fileData) return alert("أكمل البيانات");
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const res = db.ref('users').push();
+        await res.set({ username: n, email: e, phone: ph, password: ps, img: fileData, myRefCode: code, referredBy: ref, balance: 0, totalProfits: 0, activePlansDetails: [], lastProfitTime: Date.now() });
+        localStorage.setItem('mk_user_key', res.key); location.reload();
+    }
 
-        // --- نظام الإيداع والسحب ---
-        function openW(type) {
-            const cont = document.getElementById('modalContent');
-            if(type==='deposit') {
-                cont.innerHTML = `
-                    <h2 class="text-lg font-black text-yellow-500 mb-4">إيداع رصيد</h2>
-                    <div class="space-y-3">
-                        <div class="bg-black/40 p-3 rounded-xl text-center border border-white/10">
-                            <p class="text-[8px] text-gray-400 mb-1">رمز المحفظة (USDT TRC20)</p>
-                            <p class="text-[9px] font-mono text-yellow-500 break-all select-all">0xd193a351f670d8e3014d27e92f475710e1fe7229</p>
-                            <button onclick="copyText('0xd193a351f670d8e3014d27e92f475710e1fe7229')" class="mt-2 text-[10px] bg-yellow-500 text-black px-4 py-1 rounded-full font-bold">نسخ الرمز 📋</button>
-                        </div>
-                        <select id="mType" onchange="document.getElementById('ab').classList.toggle('hidden',this.value!=='Asiacell')" class="w-full p-3 rounded-xl text-xs">
-                            <option value="USDT">USDT (TRC20)</option><option value="Asiacell">آسيا سيل (كارت)</option>
-                        </select>
-                        <input type="number" id="mAmt" placeholder="المبلغ ($)" class="w-full p-3 rounded-xl text-xs">
-                        <div id="ab" class="hidden"><input type="text" id="aCode" placeholder="رقم الكارت" class="w-full p-3 rounded-xl text-xs"></div>
-                        <div class="border border-dashed border-white/20 p-4 rounded-xl text-center cursor-pointer" onclick="document.getElementById('pi').click()">
-                            <img id="pp" src="" class="hidden w-full max-h-32 object-contain mb-1"><span id="pt" class="text-[9px] text-gray-500">ارفق صورة التحويل</span>
-                        </div>
-                        <input type="file" id="pi" class="hidden" onchange="hFile(this,'pp','pt')">
-                        <button onclick="subT('deposit')" class="w-full btn-gold p-3 rounded-xl text-xs">إرسال الطلب</button>
-                    </div>`;
-            } else {
-                cont.innerHTML = `
-                    <h2 class="text-lg font-black text-red-500 mb-4">سحب أرباح</h2>
-                    <div class="space-y-3">
-                        <select id="wm" class="w-full p-3 rounded-xl text-xs">
-                            <option value="ZainCash">زين كاش</option><option value="MasterCard">ماستر كارد</option><option value="USDT">USDT (TRC20)</option>
-                        </select>
-                        <input type="number" id="mAmt" placeholder="المبلغ ($)" class="w-full p-3 rounded-xl text-xs">
-                        <input type="text" id="md" placeholder="الرقم أو عنوان المحفظة" class="w-full p-3 rounded-xl text-xs">
-                        <div class="border border-dashed border-white/20 p-4 rounded-xl text-center cursor-pointer" onclick="document.getElementById('pi').click()">
-                            <img id="pp" src="" class="hidden w-full max-h-32 object-contain mb-1"><span id="pt" class="text-[9px] text-gray-500">صورة الهوية أو المحفظة للتوثيق</span>
-                        </div>
-                        <input type="file" id="pi" class="hidden" onchange="hFile(this,'pp','pt')">
-                        <button onclick="subT('withdraw')" class="w-full btn-red p-3 rounded-xl text-xs">تأكيد السحب</button>
-                    </div>`;
-            }
-            document.getElementById('modal').classList.remove('hidden');
-        }
+    function toggleAuth(reg) { document.getElementById('loginForm').classList.toggle('hidden', reg); document.getElementById('registerForm').classList.toggle('hidden', !reg); }
+    function closeModal() { document.getElementById('modal').classList.add('hidden'); fileData = ""; }
+    function logout() { localStorage.clear(); location.reload(); }
 
-        async function subT(type) {
-            const amt = document.getElementById('mAmt').value; if(!amt || !tempFile) return alert("أكمل كافة الحقول");
-            const data = {
-                uid: myKey, uName: user.username, uPhone: user.phone, uEmail: user.email,
-                uRef: user.myRefCode, uBalance: user.balance, amount: amt, type: type,
-                method: document.getElementById('mType')?.value || document.getElementById('wm')?.value,
-                dest: document.getElementById('md')?.value || "Deposit Request", proof: tempFile,
-                status: 'قيد المراجعة', time: new Date().toLocaleString('ar-EG')
-            };
-            await rdb.ref('transactions').push(data);
-            await rdb.ref('notifications/'+myKey).push({ text: `تم استلام طلبك لـ ${type==='deposit'?'الإيداع':'السحب'} بقيمة $${amt}`, time: data.time, read: false });
-            alert("تم إرسال الطلب للأدمن"); closeM();
-        }
-
-        function initApp() {
-            securityCheck();
-            rdb.ref('users/'+myKey).on('value', snap => {
-                user = snap.val(); if(!user) return;
-                if(user.isBanned) return doBan(user.banReason || "Banned");
-                
-                handleDailyProfit();
-
-                document.getElementById('authPage').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                
-                document.getElementById('uTopName').innerText = user.username;
-                document.getElementById('uAvatar').src = user.img;
-                document.getElementById('uAvatarMain').src = user.img;
-                document.getElementById('uNameMain').innerText = user.username;
-                document.getElementById('uIdMain').innerText = user.myRefCode;
-                document.getElementById('uBal').innerText = `$${user.balance.toFixed(2)}`;
-                document.getElementById('uBalMain').innerText = user.balance.toFixed(2);
-                
-                document.getElementById('pAvatar').src = user.img;
-                document.getElementById('pNewName').value = user.username;
-                document.getElementById('pEmail').innerText = user.email;
-                document.getElementById('pPhone').innerText = user.phone;
-                document.getElementById('pRefCode').innerText = user.myRefCode;
-                
-                let d = 0; (user.activePlans || []).forEach(p => d += p * 0.02);
-                document.getElementById('dEarn').innerText = `$${d.toFixed(2)}`;
-                document.getElementById('tEarn').innerText = `$${(user.totalProfit || 0).toFixed(2)}`;
-                
-                renderInvest(); initSlider(); startTimer(); loadTrans(); loadTeam(); checkUnread(); loadAgents(); updateActivePlansUI();
-            });
-        }
-
-        // تحديث واجهة الباقات النشطة
-        function updateActivePlansUI() {
-            const plans = user.activePlans || [];
-            let hHome = "", hProf = "";
-            if (plans.length > 0) {
-                plans.forEach(p => {
-                    hHome += `<div class="glass-card p-2 text-center border-l border-yellow-500/30"><p class="text-[8px] font-bold text-yellow-500">$${p}</p><p class="text-[6px] opacity-50">نشط ✅</p></div>`;
-                    hProf += `<div class="flex justify-between items-center bg-white/5 p-2 rounded-lg border-r border-green-500"><span class="text-[9px]">باقة $${p} الاستثمارية</span><span class="text-[8px] text-green-400">نشط</span></div>`;
-                });
-            } else {
-                hHome = "<p class='col-span-2 text-center text-[8px] opacity-30 py-2'>لا توجد اشتراكات</p>";
-                hProf = "<p class='text-center text-[9px] opacity-30 py-2'>لا توجد اشتراكات</p>";
-            }
-            document.getElementById('activePlansHome').innerHTML = hHome;
-            document.getElementById('activePlansProfile').innerHTML = hProf;
-        }
-
-        function renderInvest() {
-            const ps = [25, 50, 100, 250, 500, 1000];
-            document.getElementById('investList').innerHTML = ps.map(p => `<div onclick="buyP(${p})" class="glass-card p-4 flex justify-between items-center active:scale-95 transition border-r-2 border-yellow-500"><div class="flex items-center gap-3"><span class="text-2xl">💎</span><div><p class="font-black text-yellow-500 text-xs">باقة $${p}</p><p class="text-[8px] text-gray-400">العائد: $${(p*0.02).toFixed(2)} يومياً</p></div></div><span class="text-yellow-500">❯</span></div>`).join('');
-        }
-
-        function buyP(p) {
-            if(user.balance < p) return alert("عذراً، الرصيد غير كافٍ");
-            if(confirm(`هل أنت متأكد من تفعيل باقة $${p}؟`)) {
-                let aps = user.activePlans || []; aps.push(p);
-                rdb.ref('users/'+myKey).update({ 
-                    balance: user.balance - p, 
-                    activePlans: aps,
-                    lastProfitTime: Date.now() // يبدأ عد الـ 24 ساعة من لحظة الشراء
-                });
-                rdb.ref('notifications/'+myKey).push({ text: `تهانينا! تم تفعيل خطة استثمار بقيمة $${p}`, time: new Date().toLocaleString('ar-EG'), read: false });
-            }
-        }
-
-        function initSlider() {
-            const s = document.getElementById('slider');
-            const imgs = [
-                "https://i.ibb.co/5gWjTtH1/IMG-20260317-161222-576.jpg",
-                "https://i.ibb.co/67xjtzhf/1773729649466.png",
-                "https://i.ibb.co/Jh1GCqB/1773729540326.png",
-                "https://i.ibb.co/zV02MzVb/1773729478999.png",
-                "https://i.ibb.co/NdWbZ626/1773729286254.png",
-                "https://i.ibb.co/39kcs9j7/1773729242819.png",
-                "https://i.ibb.co/7tcWKp60/1773726134774.png",
-                "https://i.ibb.co/M59TjDDG/1773726069156.png"
-            ];
-            s.innerHTML = imgs.map((u, i) => `<div class="slide ${i===0?'active':''}" style="background-image:url('${u}')"></div>`).join('');
-            let c = 0; setInterval(() => {
-                const slides = s.querySelectorAll('.slide');
-                if(slides.length){ slides[c].classList.remove('active'); c = (c+1)%slides.length; slides[c].classList.add('active'); }
-            }, 5000); 
-        }
-
-        function startTimer() { 
-            setInterval(() => { 
-                const last = user?.lastProfitTime || Date.now();
-                const diff = Math.max(0, (24 * 60 * 60 * 1000) - (Date.now() - last));
-                const h = Math.floor(diff / 3600000).toString().padStart(2,'0');
-                const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2,'0');
-                const s = Math.floor((diff % 60000) / 1000).toString().padStart(2,'0');
-                document.getElementById('timerText').innerText = `${h}:${m}:${s}`; 
-            }, 1000); 
-        }
-        
-        async function register() {
-            const n = document.getElementById('rName').value, e = document.getElementById('rEmail').value, p = document.getElementById('rPhone').value, ps = document.getElementById('rPass').value, ref = document.getElementById('rRef').value;
-            if(!n || !e || !p || !ps || !tempFile) return alert("يرجى ملء كافة البيانات وصورة البروفايل");
-            const myRef = Math.floor(1000000 + Math.random() * 9000000).toString();
-            const res = rdb.ref('users').push();
-            await res.set({ 
-                username: n, email: e, phone: p, password: ps, img: tempFile, 
-                myRefCode: myRef, balance: 0, activePlans: [], referredBy: ref, 
-                totalProfit: 0, isBanned: false, lastProfitTime: Date.now() 
-            });
-            localStorage.setItem('makasib_key', res.key); location.reload();
-        }
-
-        function login() {
-            const id = document.getElementById('lId').value, ps = document.getElementById('lPass').value;
-            rdb.ref('users').once('value', snap => {
-                let k = null; snap.forEach(c => { if((c.val().email===id || c.val().phone===id) && c.val().password===ps) k = c.key; });
-                if(k) { localStorage.setItem('makasib_key', k); location.reload(); } else alert("خطأ في بيانات تسجيل الدخول");
-            });
-        }
-
-        function showTab(id) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            const btn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick').includes(id));
-            if(btn) btn.classList.add('active');
-        }
-
-        function loadTrans() {
-            rdb.ref('transactions').orderByChild('uid').equalTo(myKey).on('value', snap => {
-                let h = ""; snap.forEach(c => {
-                    const t = c.val(); h = `<div class="p-3 bg-white/5 rounded-xl flex justify-between items-center border border-white/5"><div class="flex flex-col"><p class="text-[10px] font-black">${t.type==='deposit'?'إيداع':'سحب'} $${t.amount}</p><p class="text-[7px] text-gray-500">${t.time}</p></div><span class="text-[8px] px-2 py-1 rounded-lg ${t.status==='مقبول'?'bg-green-500/20 text-green-500':'bg-yellow-500/20 text-yellow-500'} font-bold">${t.status}</span></div>` + h;
-                });
-                document.getElementById('transList').innerHTML = h || "<p class='text-center py-5 opacity-20 text-[10px]'>لا توجد سجلات بعد</p>";
-            });
-        }
-
-        function loadTeam() {
-            rdb.ref('users').once('value', snap => {
-                let act = 0, ina = 0, h = "", bonus = 0;
-                snap.forEach(c => {
-                    const u = c.val(); if(u.referredBy === user.myRefCode) {
-                        const isA = (u.activePlans || []).length > 0;
-                        if(isA) { act++; if(act <= 10) bonus += 5; else bonus += 1; } else ina++;
-                        h += `<div class="glass-card p-2 flex justify-between items-center"><div class="flex items-center gap-2"><img src="${u.img}" class="w-8 h-8 rounded-full object-cover"><p class="font-bold text-[10px]">${u.username}</p></div><span class="text-[8px] ${isA?'text-green-400':'text-gray-500'} font-bold">${isA?'نشط':'خامل'}</span></div>`;
-                    }
-                });
-                document.getElementById('tAct').innerText = act; document.getElementById('tIna').innerText = ina;
-                document.getElementById('teamBonus').innerText = `$${bonus.toFixed(2)}`;
-                document.getElementById('teamList').innerHTML = h || "<p class='text-center py-10 opacity-20 text-[10px]'>فريقك لا يزال فارغاً</p>";
-            });
-        }
-
-        function checkUnread() {
-            rdb.ref('notifications/'+myKey).on('value', snap => {
-                let un = false; snap.forEach(c => { if(!c.val().read) un = true; });
-                document.getElementById('notifDot').classList.toggle('hidden', !un);
-            });
-        }
-
-        function saveP() { rdb.ref('users/'+myKey).update({ username: document.getElementById('pNewName').value, img: document.getElementById('pAvatar').src }); alert("تم تحديث الملف الشخصي"); }
-        function closeM() { document.getElementById('modal').classList.add('hidden'); tempFile = ""; }
-        function toggleAuth(reg) { document.getElementById('loginBox').classList.toggle('hidden', reg); document.getElementById('regBox').classList.toggle('hidden', !reg); }
-        function logout() { localStorage.clear(); location.reload(); }
-        
-        window.onload = () => { if(myKey) initApp(); else securityCheck(); };
-    </script>
+    window.onload = () => { init(); startTimer(); };
+</script>
 </body>
 </html>

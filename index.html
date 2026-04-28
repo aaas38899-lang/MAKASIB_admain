@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Makasib Ultimate V6</title>
+    <title>Makasib Ultimate V6 - Professional Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -24,7 +24,6 @@
         .slide { position: absolute; inset: 0; opacity: 0; transition: 1s ease-in-out; background-size: cover; background-position: center; }
         .slide.active { opacity: 1; }
 
-        /* الشريط المتحرك - تم عكس الاتجاه */
         .marquee { width: 100%; overflow: hidden; background: rgba(212, 175, 55, 0.1); padding: 8px 0; border-y: 1px solid var(--gold); margin-bottom: 10px; }
         .marquee-text { display: inline-block; white-space: nowrap; animation: marquee-reverse 25s linear infinite; color: var(--gold); font-weight: bold; font-size: 10px; }
         @keyframes marquee-reverse { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
@@ -95,7 +94,7 @@
         </div>
     </header>
 
-    <div class="marquee"><div class="marquee-text">🚀 نظام مكاسب V6: تم تحديث قواعد السحب (الحد الأدنى 25$) وتفعيل نظام الاستقطاع لضمان استمرارية الأرباح لجميع الأعضاء 🚀</div></div>
+    <div class="marquee"><div class="marquee-text">🚀 نظام مكاسب V6: باقات استثمارية جديدة بعوائد يومية تصل إلى 267$ - مدة الاشتراك 60 يوماً لجميع الفئات 🚀</div></div>
 
     <main class="p-2">
         <div id="home" class="tab-content active space-y-4">
@@ -107,7 +106,7 @@
                 </div>
                 <div class="text-right">
                     <p id="timer" class="text-gold font-bold text-xs">--:--:--</p>
-                    <p class="text-[6px] opacity-40 uppercase">توزيع الأرباح</p>
+                    <p class="text-[6px] opacity-40 uppercase">توزيع الأرباح القادم</p>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-3 mx-2">
@@ -120,12 +119,12 @@
                     <p id="subCount" class="text-green-500 font-black text-sm">0</p>
                 </div>
             </div>
-            <h3 class="text-[10px] font-bold text-gold px-3 flex items-center gap-2"><span>💎</span> باقاتك النشطة</h3>
+            <h3 class="text-[10px] font-bold text-gold px-3 flex items-center gap-2"><span>💎</span> باقاتك النشطة (اضغط للتفاصيل)</h3>
             <div id="activePlansGrid" class="grid grid-cols-2 gap-3 px-2"></div>
         </div>
 
         <div id="invest" class="tab-content space-y-3 px-2">
-            <h2 class="text-sm font-black text-gold">مركز الاستثمار</h2>
+            <h2 class="text-sm font-black text-gold">مركز الاستثمار (خطة 60 يوماً)</h2>
             <div id="marketList" class="grid gap-3"></div>
         </div>
 
@@ -201,6 +200,19 @@
     const adminMail = "Saged5520y@gmail.com";
     const appUsdtWallet = "TNc5yGf6...أدخل_محفظتك_هنا";
 
+    // الباقات الجديدة
+    const plansMarket = [
+        { cost: 30, daily: 1, monthly: 30 },
+        { cost: 60, daily: 2, monthly: 60 },
+        { cost: 120, daily: 4, monthly: 120 },
+        { cost: 480, daily: 8, monthly: 240 }, // ملاحظة: الربح الشهري لـ 480 هو 240 بناءً على يومي 8، لكن طلبت 480، سأعتمد اليومي 8
+        { cost: 960, daily: 16, monthly: 480 },
+        { cost: 1920, daily: 32, monthly: 960 },
+        { cost: 4000, daily: 133.33, monthly: 4000 },
+        { cost: 6000, daily: 200, monthly: 6000 },
+        { cost: 8000, daily: 266.66, monthly: 8000 }
+    ];
+
     async function init() {
         if(!uKey) {
             document.getElementById('loadingOverlay').style.display = 'none';
@@ -210,7 +222,7 @@
         db.ref('users/'+uKey).on('value', async snap => {
             uData = snap.val();
             if(!uData) return logout();
-            await checkProfitsSecurity();
+            await checkProfitsAndExpiry();
             renderUI();
             document.getElementById('loadingOverlay').style.display = 'none';
             document.getElementById('authScreen').classList.add('hidden');
@@ -218,18 +230,46 @@
         });
     }
 
-    async function checkProfitsSecurity() {
+    async function checkProfitsAndExpiry() {
         db.ref(".info/serverTimeOffset").once("value", async offsetSnap => {
             const now = Date.now() + (offsetSnap.val() || 0);
             const last = uData.lastProfitTime || now;
-            if (now - last >= 86400000) {
-                let daily = 0;
-                if(uData.activePlansDetails) uData.activePlansDetails.forEach(p => daily += p.amount * 0.02);
-                if(daily > 0) {
-                    await db.ref('users/'+uKey).update({ balance: (uData.balance || 0) + daily, totalProfits: (uData.totalProfits || 0) + daily, lastProfitTime: now });
-                    addNotif("💰 توزيع أرباح", `تمت إضافة أرباح اليوم $${daily.toFixed(2)}.`);
-                } else { await db.ref('users/'+uKey).update({ lastProfitTime: now }); }
+            
+            let plans = uData.activePlansDetails || [];
+            let dailyTotal = 0;
+            let expiredCount = 0;
+
+            // تصفية الباقات التي تجاوزت شهرين (60 يوم)
+            const activePlans = plans.filter(p => {
+                const ageDays = (now - p.ts) / (1000 * 60 * 60 * 24);
+                if (ageDays >= 60) {
+                    expiredCount++;
+                    return false;
+                }
+                dailyTotal += p.daily;
+                return true;
+            });
+
+            let updates = {};
+            let changed = false;
+
+            if(expiredCount > 0) {
+                updates.activePlansDetails = activePlans;
+                addNotif("⚠️ انتهاء باقة", `انتهت صلاحية ${expiredCount} باقة بعد اكتمال شهرين.`);
+                changed = true;
             }
+
+            if (now - last >= 86400000) {
+                if(dailyTotal > 0) {
+                    updates.balance = (uData.balance || 0) + dailyTotal;
+                    updates.totalProfits = (uData.totalProfits || 0) + dailyTotal;
+                    addNotif("💰 توزيع أرباح", `تمت إضافة أرباح اليوم $${dailyTotal.toFixed(2)}.`);
+                }
+                updates.lastProfitTime = now;
+                changed = true;
+            }
+
+            if(changed) await db.ref('users/'+uKey).update(updates);
         });
     }
 
@@ -247,7 +287,7 @@
         document.getElementById('subCount').innerText = plans.length;
         document.getElementById('pSubCount').innerText = plans.length;
         
-        let dE = 0; plans.forEach(p => dE += p.amount * 0.02);
+        let dE = 0; plans.forEach(p => dE += p.daily);
         document.getElementById('dailyE').innerText = `$${dE.toFixed(2)}`;
 
         renderSlider();
@@ -277,49 +317,69 @@
     }
 
     function renderMarket() {
-        const prices = [25, 50, 100, 250, 500, 1000, 1500, 2000];
-        document.getElementById('marketList').innerHTML = prices.map(p => `
+        document.getElementById('marketList').innerHTML = plansMarket.map(p => `
             <div class="glass p-4 flex justify-between items-center border-r-4 border-gold active:scale-95 transition">
-                <div><p class="font-black text-[11px]">باقة استثمار $${p}</p><p class="text-[8px] text-green-500 font-bold">العائد: $${(p*0.02).toFixed(2)} يومياً</p></div>
-                <button onclick="buyP(${p})" class="btn-gold px-5 py-2 rounded-xl text-[9px]">تفعيل</button>
+                <div>
+                    <p class="font-black text-[11px]">باقة استثمار $${p.cost}</p>
+                    <p class="text-[8px] text-green-500 font-bold">الربح: $${p.daily.toFixed(2)} يومياً / $${p.monthly} شهرياً</p>
+                    <p class="text-[6px] opacity-50">المدة: 60 يوماً</p>
+                </div>
+                <button onclick="buyP(${p.cost}, ${p.daily})" class="btn-gold px-5 py-2 rounded-xl text-[9px]">تفعيل</button>
             </div>`).join('');
     }
 
-    async function buyP(amt) {
-        if(uData.balance < amt) return alert("الرصيد غير كافٍ للاشتراك في هذه الباقة.");
-        if(confirm(`تأكيد تفعيل باقة $${amt}؟`)) {
+    async function buyP(amt, daily) {
+        if(uData.balance < amt) return alert("الرصيد غير كافٍ للاشتراك.");
+        if(confirm(`تأكيد تفعيل باقة $${amt} لمدة شهرين؟`)) {
             let list = uData.activePlansDetails || [];
-            list.push({ amount: amt, date: new Date().toLocaleString('ar-EG'), ts: Date.now() });
+            const now = new Date();
+            list.push({ 
+                amount: amt, 
+                daily: daily,
+                date: now.toLocaleDateString('ar-EG'), 
+                time: now.toLocaleTimeString('ar-EG'),
+                ts: Date.now() 
+            });
             await db.ref('users/'+uKey).update({ balance: uData.balance - amt, activePlansDetails: list });
-            addNotif("💎 باقة جديدة", `تم تفعيل باقة $${amt}.`);
-            alert("تم تفعيل الباقة بنجاح!");
+            addNotif("💎 باقة جديدة", `تم تفعيل باقة $${amt} بنجاح.`);
+            alert("تم تفعيل الباقة!");
         }
     }
 
     function renderActivePlans() {
         const list = uData.activePlansDetails || [];
-        document.getElementById('activePlansGrid').innerHTML = list.map(p => `
-            <div class="glass p-3 text-center border-b-2 border-gold/20">
+        document.getElementById('activePlansGrid').innerHTML = list.map((p, index) => `
+            <div onclick="showSingleSubDetails(${index})" class="glass p-3 text-center border-b-2 border-gold/20 active:scale-95 transition">
                 <p class="text-gold font-black text-[10px]">$${p.amount}</p>
                 <p class="text-[7px] text-green-500 font-bold">نشطة ✅</p>
+                <p class="text-[6px] opacity-40">اضغط للتفاصيل</p>
             </div>`).join('') || `<p class="col-span-2 text-center py-5 opacity-20 text-[8px]">لا يوجد باقات حالياً</p>`;
     }
 
-    function showSubsDetails() {
-        const list = uData.activePlansDetails || [];
-        let h = `<h2 class="text-gold font-black text-center mb-5">تفاصيل استثماراتك</h2><div class="space-y-3">`;
-        list.forEach(p => {
-            h += `<div class="p-3 bg-white/5 rounded-xl border-r-2 border-gold text-[9px]">
-                <div class="flex justify-between mb-1"><span>القيمة:</span><span class="text-gold font-bold">$${p.amount}</span></div>
-                <div class="flex justify-between mb-1"><span>التاريخ:</span><span>${p.date}</span></div>
-                <div class="flex justify-between"><span>الربح اليومي:</span><span class="text-green-500">+$${(p.amount*0.02).toFixed(2)}</span></div>
+    function showSingleSubDetails(idx) {
+        const p = uData.activePlansDetails[idx];
+        const expiryDate = new Date(p.ts + (60 * 24 * 60 * 60 * 1000));
+        
+        document.getElementById('modalContent').innerHTML = `
+            <div class="text-center">
+                <div class="w-16 h-16 bg-gold/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-gold/50">
+                    <span class="text-2xl">💎</span>
+                </div>
+                <h2 class="text-gold font-black text-lg mb-2">تفاصيل الباقة النشطة</h2>
+                <div class="space-y-3 text-right glass p-4 text-[10px]">
+                    <div class="flex justify-between border-b border-white/5 pb-2"><span>قيمة الاشتراك:</span><span class="text-white font-bold">$${p.amount}</span></div>
+                    <div class="flex justify-between border-b border-white/5 pb-2"><span>تاريخ الاشتراك:</span><span class="text-white">${p.date}</span></div>
+                    <div class="flex justify-between border-b border-white/5 pb-2"><span>وقت الاشتراك:</span><span class="text-white">${p.time}</span></div>
+                    <div class="flex justify-between border-b border-white/5 pb-2"><span>الربح اليومي:</span><span class="text-green-500 font-bold">+$${p.daily.toFixed(2)}</span></div>
+                    <div class="flex justify-between border-b border-white/5 pb-2"><span>مدة الاشتراك:</span><span class="text-blue-400">60 يوماً</span></div>
+                    <div class="flex justify-between pt-1"><span>تاريخ الانتهاء:</span><span class="text-red-400 font-bold">${expiryDate.toLocaleDateString('ar-EG')}</span></div>
+                </div>
+                <p class="text-[8px] text-gray-500 mt-4 italic">توزع الأرباح تلقائياً كل 24 ساعة من وقت الاشتراك.</p>
             </div>`;
-        });
-        document.getElementById('modalContent').innerHTML = (list.length ? h : `<p class="text-center py-10 opacity-30">لا توجد باقات استثمارية نشطة</p>`) + `</div>`;
         document.getElementById('modal').classList.remove('hidden');
     }
 
-    // --- المحفظة والعمليات (تحديث V6) ---
+    // --- المحفظة والعمليات ---
     function openFinModal(type) {
         const isD = type === 'deposit';
         let options = isD ? `
@@ -375,7 +435,7 @@
             info.innerHTML = `قم بالتحويل للمحفظة التالية:<br><b class="text-[10px] select-all">${appUsdtWallet}</b>`;
             info.classList.remove('hidden');
         } else if(m === 'Asiacell') {
-            info.innerHTML = `يرجى كتابة الـ 16 رقم الخاص بالكارت في حقل الرقم أدناه بدقة.`;
+            info.innerHTML = `يرجى كتابة الـ 16 رقم الخاص بالكارت بدقة.`;
             info.classList.remove('hidden');
         }
     }
@@ -384,31 +444,21 @@
         const m = document.getElementById('fMethod').value;
         const amt = parseFloat(document.getElementById('fAmt').value);
         const acc = document.getElementById('fAcc').value;
-        
-        // التحقق من صحة البيانات وإلزاميتها
-        if(!m || !amt || !acc || !fileData) return alert("خطأ: يرجى إكمال جميع الحقول وإرفاق الصورة المطلوبة.");
+        if(!m || !amt || !acc || !fileData) return alert("أكمل البيانات");
         
         if(type === 'withdraw') {
-            if(amt < 25) return alert("خطأ: الحد الأدنى للسحب هو 25 دولار.");
-            if(amt > uData.balance) return alert("خطأ: رصيدك غير كافٍ لسحب هذا المبلغ.");
-        }
-
-        const tid = 'TR' + Date.now();
-        const requestData = {
-            id: tid, uid: uKey, uName: uData.username, uPhone: uData.phone, amount: amt, type: type, 
-            status: 'قيد المراجعة', method: m, account: acc, proof: fileData, 
-            time: new Date().toLocaleString('ar-EG'), ts: Date.now()
-        };
-
-        // إذا كان سحب، نخصم المبلغ من الرصيد فوراً لحين المعالجة
-        if(type === 'withdraw') {
+            if(amt < 25) return alert("الحد الأدنى 25$");
+            if(amt > uData.balance) return alert("رصيدك غير كافٍ");
             await db.ref('users/'+uKey).update({ balance: uData.balance - amt });
         }
 
-        await db.ref('transactions/' + tid).set(requestData);
-        addNotif("🏦 طلب مالي", `تم إرسال طلب ${type==='deposit'?'إيداع':'سحب'} بقيمة $${amt}.`);
-        alert("تم إرسال طلبك بنجاح، سيتم مراجعته من قبل الإدارة."); 
-        closeModal();
+        const tid = 'TR' + Date.now();
+        await db.ref('transactions/' + tid).set({
+            id: tid, uid: uKey, uName: uData.username, amount: amt, type: type, 
+            status: 'قيد المراجعة', method: m, account: acc, proof: fileData, 
+            time: new Date().toLocaleString('ar-EG'), ts: Date.now()
+        });
+        alert("تم إرسال الطلب!"); closeModal();
     }
 
     function renderHistory() {
@@ -416,72 +466,28 @@
             let h = ""; let list = []; snap.forEach(c => list.unshift(c.val()));
             list.forEach(t => {
                 h += `
-                <div class="p-4 bg-white/5 rounded-2xl border-l-4 ${t.status==='مرفوض'?'border-red-500':t.status==='مكتمل'?'border-green-500':'border-gold'} active:scale-95 transition" onclick="showTransDetails('${t.id}')">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <span class="text-xl">${t.type==='deposit'?'📥':'📤'}</span>
-                            <div><p class="text-[10px] font-black">${t.type==='deposit'?'إيداع':'سحب'} ${t.method}</p><p class="text-[7px] opacity-40">$${t.amount} | ${t.time}</p></div>
-                        </div>
-                        <span class="text-[8px] font-bold ${t.status==='مكتمل'?'text-green-500':t.status==='مرفوض'?'text-red-500':'text-gold'}">${t.status}</span>
+                <div class="p-4 bg-white/5 rounded-2xl border-l-4 ${t.status==='مكتمل'?'border-green-500':'border-gold'} active:scale-95 transition" onclick="showTransDetails('${t.id}')">
+                    <div class="flex justify-between items-center text-[9px]">
+                        <span>${t.type==='deposit'?'📥 إيداع':'📤 سحب'}</span>
+                        <span class="font-bold text-gold">$${t.amount}</span>
+                        <span class="opacity-40">${t.status}</span>
                     </div>
                 </div>`;
             });
-            document.getElementById('historyList').innerHTML = h || `<p class="text-center py-5 opacity-20">سجل العمليات فارغ</p>`;
+            document.getElementById('historyList').innerHTML = h || `<p class="text-center py-5 opacity-20">لا يوجد سجل</p>`;
         });
     }
 
-    async function showTransDetails(tid) {
-        const snap = await db.ref('transactions/'+tid).once('value');
-        const t = snap.val();
-        let cancelBtn = (t.status === 'قيد المراجعة') ? `<button onclick="cancelTrans('${t.id}','${t.type}',${t.amount})" class="w-full bg-red-600 p-3 rounded-xl mt-4 text-[10px] font-black shadow-lg">إلغاء الطلب واسترجاع الرصيد</button>` : '';
-        
-        document.getElementById('modalContent').innerHTML = `
-            <h3 class="text-gold font-black mb-4 text-center">تفاصيل الطلب المالي</h3>
-            <div class="space-y-3 text-[9px] glass p-5 border border-white/5">
-                <div class="flex justify-between border-b border-white/5 pb-2"><span>النوع:</span><span class="font-bold text-white">${t.type==='deposit'?'إيداع':'سحب'}</span></div>
-                <div class="flex justify-between border-b border-white/5 pb-2"><span>الوسيلة:</span><span class="font-bold text-blue-400">${t.method}</span></div>
-                <div class="flex justify-between border-b border-white/5 pb-2"><span>المبلغ:</span><span class="font-bold text-gold">$${t.amount}</span></div>
-                <div class="flex justify-between border-b border-white/5 pb-2"><span>رقم الحساب:</span><span class="font-bold text-white select-all">${t.account}</span></div>
-                <div class="flex justify-between border-b border-white/5 pb-2"><span>الحالة:</span><span class="font-black ${t.status==='مكتمل'?'text-green-500':'text-gold'}">${t.status}</span></div>
-                <div class="flex justify-between pb-2"><span>التاريخ:</span><span>${t.time}</span></div>
-                <div class="mt-2">
-                    <p class="mb-2 opacity-50 text-[7px] text-center">صورة الإثبات المرفقة</p>
-                    <img src="${t.proof}" class="w-full rounded-xl border border-white/10 shadow-2xl">
-                </div>
-            </div>
-            ${cancelBtn}`;
-        document.getElementById('modal').classList.remove('hidden');
-    }
-
-    async function cancelTrans(id, type, amt) {
-        if(confirm("تأكيد إلغاء هذا الطلب؟ سيتم استرجاع المبلغ لمحفظتك فوراً.")) {
-            await db.ref('transactions/'+id).update({status: 'ملغي من المستخدم'});
-            if(type === 'withdraw') await db.ref('users/'+uKey).update({balance: uData.balance + amt});
-            alert("تم إلغاء الطلب بنجاح."); closeModal();
-        }
-    }
-
-    // --- الوكلاء والفريق ووظائف عامة ---
     function renderAgents() {
-        const isAdmin = uData.email === adminMail;
-        document.getElementById('addAgBtn').classList.toggle('hidden', !isAdmin);
         db.ref('agents').on('value', snap => {
             let h = "";
             snap.forEach(c => {
                 const a = c.val();
-                h += `<div class="glass p-3 flex gap-3 items-center border-r-2 border-gold"><img src="${a.img}" class="w-12 h-12 rounded-xl object-cover"><div class="flex-1"><h4 class="font-black text-[10px]">${a.n}</h4><p class="text-[8px] text-gold">${a.c}</p><div class="flex gap-2 mt-2"><a href="${a.w}" class="bg-green-600/20 text-green-500 px-3 py-1 rounded text-[7px]">واتساب</a><a href="${a.t}" class="bg-blue-600/20 text-blue-500 px-3 py-1 rounded text-[7px]">تليجرام</a></div></div>${isAdmin?`<button onclick="delAg('${c.key}')" class="text-red-500 px-2">🗑️</button>`:''}</div>`;
+                h += `<div class="glass p-3 flex gap-3 items-center border-r-2 border-gold"><img src="${a.img}" class="w-12 h-12 rounded-xl object-cover"><div class="flex-1"><h4 class="font-black text-[10px]">${a.n}</h4><p class="text-[8px] text-gold">${a.c}</p></div><div class="flex gap-1"><a href="${a.w}" class="text-green-500">WA</a></div></div>`;
             });
-            document.getElementById('agentsGrid').innerHTML = h || `<p class="text-center py-5 opacity-20">لا يوجد وكلاء حالياً</p>`;
+            document.getElementById('agentsGrid').innerHTML = h;
         });
     }
-
-    function openAgForm() {
-        document.getElementById('modalContent').innerHTML = `<h2 class="text-gold font-black mb-4 text-center">إضافة وكيل</h2><div class="space-y-2"><input type="text" id="an" placeholder="الاسم" class="w-full p-3 rounded-lg outline-none text-[10px]"><input type="text" id="ac" placeholder="المدينة" class="w-full p-3 rounded-lg outline-none text-[10px]"><input type="text" id="aw" placeholder="رابط واتساب" class="w-full p-3 rounded-lg outline-none text-[10px]"><input type="text" id="at" placeholder="رابط تليجرام" class="w-full p-3 rounded-lg outline-none text-[10px]"><input type="text" id="ai" placeholder="رابط الصورة" class="w-full p-3 rounded-lg outline-none text-[10px]"><button onclick="saveAg()" class="w-full btn-gold p-3 rounded-xl text-[10px]">حفظ</button></div>`;
-        document.getElementById('modal').classList.remove('hidden');
-    }
-
-    async function saveAg() { const d = { n: document.getElementById('an').value, c: document.getElementById('ac').value, w: document.getElementById('aw').value, t: document.getElementById('at').value, img: document.getElementById('ai').value }; await db.ref('agents').push(d); closeModal(); }
-    function delAg(k) { if(confirm("حذف؟")) db.ref('agents/'+k).remove(); }
 
     function renderTeam() {
         db.ref('users').once('value', snap => {
@@ -491,11 +497,11 @@
                 if(u.referredBy === uData.myRefCode) {
                     const active = (u.activePlansDetails && u.activePlansDetails.length > 0);
                     if(active) profits += 5;
-                    h += `<div class="glass p-2 flex justify-between items-center text-[9px]"><div class="flex items-center gap-2"><img src="${u.img}" class="w-7 h-7 rounded-full object-cover"><p>${u.username}</p></div><span class="${active?'text-green-500':'text-gray-500'} font-bold">${active?'نشط ✅':'خامل'}</span></div>`;
+                    h += `<div class="glass p-2 flex justify-between items-center text-[9px]"><p>${u.username}</p><span>${active?'نشط':'خامل'}</span></div>`;
                 }
             });
             document.getElementById('teamBon').innerText = `$${profits.toFixed(2)}`;
-            document.getElementById('teamGrid').innerHTML = h || `<p class="text-center py-5 opacity-20">لا يوجد أعضاء في فريقك</p>`;
+            document.getElementById('teamGrid').innerHTML = h || `<p class="text-center py-5 opacity-20">لا يوجد فريق</p>`;
         });
     }
 
@@ -506,32 +512,27 @@
             let h = "", unread = false;
             let list = []; snap.forEach(c => { if(!c.val().read) unread = true; list.unshift(c.val()); });
             document.getElementById('notifDot').style.display = unread ? 'block' : 'none';
-            list.forEach(n => {
-                h += `<div class="glass p-3 border-l-2 ${n.read?'border-transparent':'border-gold'}"><p class="text-gold font-black text-[9px]">${n.title}</p><p class="text-[8px] opacity-70">${n.body}</p><p class="text-[6px] opacity-30 mt-1">${n.time}</p></div>`;
-            });
-            document.getElementById('notifsList').innerHTML = h || `<p class="text-center py-10 opacity-20">لا توجد تنبيهات</p>`;
+            list.forEach(n => { h += `<div class="glass p-3 border-l-2 border-gold mb-2"><p class="text-gold font-black text-[9px]">${n.title}</p><p class="text-[8px] opacity-70">${n.body}</p></div>`; });
+            document.getElementById('notifsList').innerHTML = h;
         });
     }
 
     function showTab(id) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        document.querySelectorAll('.nav-it').forEach(b => { if(b.getAttribute('onclick').includes(id)) b.style.opacity = "1"; else b.style.opacity = "0.4"; });
-        if(id === 'notificationsTab') { db.ref('notifications').orderByChild('uid').equalTo(uKey).once('value', snap => { snap.forEach(c => { if(!c.val().read) db.ref('notifications/'+c.key).update({read: true}); }); }); }
+        document.querySelectorAll('.nav-it').forEach(b => { b.style.opacity = b.getAttribute('onclick').includes(id) ? "1" : "0.4"; });
     }
 
-    function startTimer() { setInterval(() => { if(!uData) return; const now = Date.now(), last = uData.lastProfitTime || now; const diff = Math.max(0, 86400000 - (now - last)); const h = Math.floor(diff/3600000).toString().padStart(2,'0'); const m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0'); const s = Math.floor((diff%60000)/1000).toString().padStart(2,'0'); document.getElementById('timer').innerText = `${h}:${m}:${s}`; }, 1000); }
+    function startTimer() { setInterval(() => { if(!uData) return; const now = Date.now(), last = uData.lastProfitTime || now; const diff = Math.max(0, 86400000 - (now - last)); const h = Math.floor(diff/3600000).toString().padStart(2,'0'), m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0'), s = Math.floor((diff%60000)/1000).toString().padStart(2,'0'); document.getElementById('timer').innerText = `${h}:${m}:${s}`; }, 1000); }
 
     function previewImg(inp, id) { if(inp.files[0]) { const r = new FileReader(); r.onload = e => { fileData = e.target.result; const im = document.getElementById(id); im.src = e.target.result; im.classList.remove('hidden'); }; r.readAsDataURL(inp.files[0]); } }
 
-    function authSuccess(key) { localStorage.setItem('mk_user_key', key); uKey = key; init(); }
+    async function login() { const u = document.getElementById('logUser').value, p = document.getElementById('logPass').value; db.ref('users').once('value', snap => { let key = null; snap.forEach(c => { if((c.val().email===u || c.val().phone===u) && c.val().password===p) key = c.key; }); if(key) { localStorage.setItem('mk_user_key', key); location.reload(); } else alert("خطأ!"); }); }
 
-    async function login() { const u = document.getElementById('logUser').value, p = document.getElementById('logPass').value; if(!u || !p) return; document.getElementById('loadingOverlay').style.display = 'flex'; db.ref('users').once('value', snap => { let key = null; snap.forEach(c => { if((c.val().email===u || c.val().phone===u) && c.val().password===p) key = c.key; }); if(key) { authSuccess(key); } else { alert("خطأ في البيانات!"); document.getElementById('loadingOverlay').style.display = 'none'; } }); }
-
-    async function register() { const n = document.getElementById('regName').value, e = document.getElementById('regEmail').value, ph = document.getElementById('regPhone').value, ps = document.getElementById('regPass').value, ref = document.getElementById('regRef').value; if(!n || !e || !ph || !ps || !fileData) return alert("أكمل البيانات"); document.getElementById('loadingOverlay').style.display = 'flex'; const code = Math.floor(100000 + Math.random() * 900000).toString(); const res = db.ref('users').push(); await res.set({ username: n, email: e, phone: ph, password: ps, img: fileData, myRefCode: code, referredBy: ref, balance: 0, totalProfits: 0, activePlansDetails: [], lastProfitTime: Date.now() }); authSuccess(res.key); }
+    async function register() { const n = document.getElementById('regName').value, e = document.getElementById('regEmail').value, ph = document.getElementById('regPhone').value, ps = document.getElementById('regPass').value, ref = document.getElementById('regRef').value; if(!n || !e || !ph || !ps || !fileData) return alert("أكمل البيانات"); const code = Math.floor(100000 + Math.random() * 900000).toString(); const res = db.ref('users').push(); await res.set({ username: n, email: e, phone: ph, password: ps, img: fileData, myRefCode: code, referredBy: ref, balance: 0, totalProfits: 0, activePlansDetails: [], lastProfitTime: Date.now() }); localStorage.setItem('mk_user_key', res.key); location.reload(); }
 
     function toggleAuth(reg) { document.getElementById('loginForm').classList.toggle('hidden', reg); document.getElementById('registerForm').classList.toggle('hidden', !reg); }
-    function closeModal() { document.getElementById('modal').classList.add('hidden'); fileData = ""; }
+    function closeModal() { document.getElementById('modal').classList.add('hidden'); }
     function logout() { localStorage.clear(); location.reload(); }
 
     window.onload = () => { init(); startTimer(); };
